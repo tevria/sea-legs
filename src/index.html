@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /*@fonts*/
-/* Layout: ride-app shell. On Breathe, a full-bleed horizon plays the map under a bottom panel (status, three option pickers, main button). Motion and Help are scrolling pages. A tab bar sits at the bottom; options and documents open in bottom sheets. */
+/* Layout: ride-app shell. On Breathe, a full-bleed horizon plays the map under a bottom panel (status, mode row, three option pickers, main button). Motion, Activity and Help are scrolling pages. A tab bar sits at the bottom; options and documents open in bottom sheets; a dark veil takes over the screen in Look up and Eyes closed. */
 :root{
   --bg:#ffffff; --float:#ffffff; --fill:#f2f3f5; --fill2:#e5e7ea; --line:#e8e9ec;
   --fg:#000000; --muted:#5d6067; --faint:#a3a6ad;
@@ -58,7 +58,7 @@ svg{display:block;flex:none}
 .screens{position:relative;flex:1;min-height:0}
 .screen{position:absolute;inset:0}
 .page{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.tabbar{position:relative;z-index:3;flex:none;display:grid;grid-template-columns:repeat(3,1fr);background:var(--bg);border-top:1px solid var(--line);
+.tabbar{position:relative;z-index:3;flex:none;display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg);border-top:1px solid var(--line);
   padding-bottom:max(env(safe-area-inset-bottom,0px),var(--safe-area-inset-bottom,0px));
   padding-left:max(env(safe-area-inset-left,0px),var(--safe-area-inset-left,0px));padding-right:max(env(safe-area-inset-right,0px),var(--safe-area-inset-right,0px))}
 .tab{height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--faint);font-size:.6875rem;font-weight:700;letter-spacing:.01em;text-align:center}
@@ -82,11 +82,12 @@ svg{display:block;flex:none}
 .state[data-tone="wait"] i{animation:blink 1.2s ease-in-out infinite}
 @keyframes blink{50%{opacity:.2}}
 .panel{position:absolute;z-index:2;left:0;right:0;bottom:0;background:var(--bg);border-radius:24px 24px 0 0;box-shadow:0 -8px 30px var(--lift);padding-block:20px 16px}
-.panel-in{position:relative;max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.panel-in{position:relative;max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 .fab{position:absolute;top:-68px;right:0;width:48px;height:48px;border-radius:50%;background:var(--float);color:var(--fg);box-shadow:0 2px 12px var(--shadow);display:grid;place-items:center}
 .fab svg{width:22px;height:22px}
-.head{display:flex;flex-direction:column;gap:4px}
+.head{display:flex;flex-direction:column;gap:3px}
 .head h1{font-size:1.75rem;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.coach{font-weight:700;color:var(--fg)}
 .sub{color:var(--muted);font-variant-numeric:tabular-nums}
 .track{height:4px;margin-top:10px;border-radius:2px;background:var(--fill2);overflow:hidden}
 .track span{display:block;height:100%;background:var(--fg);transform:scaleX(0);transform-origin:left center}
@@ -95,6 +96,12 @@ svg{display:block;flex:none}
 .hint .lead{color:var(--warn-ink)}
 .hint span{flex:1;min-width:0}
 .chev{width:14px;height:14px;color:var(--muted)}
+.moderow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:8px 14px 8px 8px;border-radius:14px;background:var(--fill);transition:background-color .15s}
+.moderow:active{background:var(--fill2)}
+.mi{width:44px;height:40px;border-radius:10px;background:var(--bg);display:grid;place-items:center}
+.mi svg{width:22px;height:22px}
+.moderow b{display:block;font-weight:700;letter-spacing:-.01em}
+.moderow small{display:block;font-size:.8125rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .picks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .pick{display:flex;align-items:center;justify-content:center;gap:6px;height:48px;padding:0 8px;border-radius:12px;background:var(--fill);font-weight:700;font-size:.9375rem;min-width:0;transition:background-color .15s}
 .pick svg:first-child{width:18px;height:18px}
@@ -105,6 +112,21 @@ svg{display:block;flex:none}
 .btn:active{transform:scale(.985)}
 .btn[data-variant="secondary"]{background:var(--fill2);color:var(--fg)}
 .btn.small{height:48px;font-size:1rem}
+.btn:disabled{opacity:.45}
+.toast{position:fixed;z-index:6;left:50%;top:calc(64px + max(env(safe-area-inset-top,0px),var(--safe-area-inset-top,0px)));transform:translate(-50%,-8px);opacity:0;pointer-events:none;
+  width:max-content;max-width:min(340px,calc(100% - 32px));padding:10px 14px;border-radius:12px;background:var(--fg);color:var(--bg);
+  font-size:.875rem;font-weight:700;line-height:1.35;text-align:center;box-shadow:0 4px 16px var(--shadow);transition:opacity .25s,transform .25s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+/* the veil is always dark, whatever the theme */
+.veil{position:fixed;inset:0;z-index:5;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.86);color:#ffffff;text-align:center;
+  opacity:0;pointer-events:none;transition:opacity .6s}
+.veil.on{opacity:1;pointer-events:auto;cursor:pointer}
+.veil.deep{background:rgba(0,0,0,.96)}
+.veil-in{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:320px;transition:opacity 1.2s}
+.veil.quiet .veil-in{opacity:.22}
+.veil-title{font-size:1.875rem;font-weight:800;letter-spacing:-.03em;line-height:1.15}
+.veil-phase{font-size:1.125rem;font-weight:800;margin-top:6px}
+.veil-sub{font-size:.9375rem;font-weight:600;opacity:.75}
 
 /* pages */
 .page-in{max-width:600px;margin:0 auto;padding-top:calc(20px + max(env(safe-area-inset-top,0px),var(--safe-area-inset-top,0px)));padding-bottom:36px;display:flex;flex-direction:column;gap:28px}
@@ -112,7 +134,6 @@ svg{display:block;flex:none}
 .page-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
 h2{font-size:1.25rem;font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .block{display:flex;flex-direction:column;gap:12px}
-.lede{color:var(--muted);margin-top:-16px}
 .chip{flex:none;font-weight:700;font-size:.8125rem;line-height:1;padding:8px 12px;border-radius:999px;background:var(--fill);color:var(--muted);white-space:nowrap}
 .chip[data-level="calm"]{background:var(--ok-bg);color:var(--ok-ink)}
 .chip[data-level="moderate"]{background:var(--warn-bg);color:var(--warn-ink)}
@@ -129,6 +150,9 @@ h2{font-size:1.25rem;font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .stat .k{font-size:.8125rem;font-weight:700;color:var(--muted)}
 .stat .v{font-size:1.75rem;font-weight:800;letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums}
 .stat .s{font-size:.8125rem;color:var(--muted);line-height:1.35}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tiles .stat{padding:14px}
+.tiles .stat .v{font-size:1.5rem}
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fine{font-size:.875rem;color:var(--muted);line-height:1.5}
 .fine.center{text-align:center}
@@ -137,11 +161,16 @@ h2{font-size:1.25rem;font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .item + .item::before,.mrow + .mrow::before,.srow + .srow::before{content:"";position:absolute;top:0;left:54px;right:0;height:1px;background:var(--line)}
 .mrow{grid-template-columns:40px minmax(0,1fr) auto;width:100%}
 .srow{grid-template-columns:40px minmax(0,1fr) auto;cursor:pointer}
+.item.session{grid-template-columns:40px minmax(0,1fr) auto}
 .ic{width:40px;height:40px;border-radius:50%;background:var(--fill);display:grid;place-items:center;color:var(--fg)}
 .ic svg{width:20px;height:20px}
 .tx{display:flex;flex-direction:column;gap:2px;min-width:0}
 .tx b{font-weight:700;font-size:1rem;letter-spacing:-.005em}
 .tx small{font-size:.875rem;color:var(--muted);line-height:1.45}
+.delta{font-weight:800;font-size:.875rem;line-height:1;padding:7px 10px;border-radius:999px;background:var(--fill);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.delta.down{background:var(--ok-bg);color:var(--ok-ink)}
+.delta.up{background:var(--bad-bg);color:var(--bad-ink)}
+.empty{padding:20px;border-radius:16px;background:var(--fill);color:var(--muted);text-align:center;font-size:.9375rem}
 .callout{display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:16px;background:var(--fill)}
 .callout b{font-weight:800}
 .callout p{font-size:.9375rem;color:var(--muted)}
@@ -174,18 +203,27 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
 .opt[aria-checked="true"]{border-color:var(--fg);background:transparent}
 .opt-ic{width:52px;height:44px;border-radius:12px;background:var(--fill);display:grid;place-items:center;font-weight:800;font-size:1.125rem;font-variant-numeric:tabular-nums}
 .opt-ic svg{width:32px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.opt-ic svg.ico{width:24px;height:24px;stroke-width:2}
 .opt-tx{display:flex;flex-direction:column;gap:1px;min-width:0}
 .opt-tx b{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-weight:700;font-size:1.0625rem;letter-spacing:-.01em}
-.opt small{font-size:.875rem;color:var(--muted)}
+.opt small{font-size:.875rem;color:var(--muted);line-height:1.4}
 .opt-val{display:flex;flex-direction:column;align-items:flex-end;text-align:right;font-variant-numeric:tabular-nums}
 .opt-val b{font-weight:700;font-size:1.0625rem}
 .badge{font-style:normal;font-weight:800;font-size:.6875rem;letter-spacing:.05em;text-transform:uppercase;line-height:1;padding:4px 7px;border-radius:6px;background:var(--fill2);color:var(--fg)}
+.scale{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.scale button{height:52px;border-radius:12px;background:var(--fill);font-weight:800;font-size:1.125rem;text-align:center;font-variant-numeric:tabular-nums;transition:background-color .15s}
+.scale button:active{background:var(--fill2)}
+.legend{display:flex;justify-content:space-between;gap:12px;margin-top:8px;font-size:.8125rem;font-weight:600;color:var(--muted)}
+.linkbtn{align-self:center;padding:10px 16px;color:var(--muted);font-weight:700}
+.result{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0 4px;text-align:center}
+.result .big{font-size:2.75rem;font-weight:800;letter-spacing:-.04em;line-height:1.05}
+.result p{color:var(--muted)}
 .prose{display:flex;flex-direction:column;gap:12px;-webkit-user-select:text;user-select:text}
 .prose h3{font-size:1.0625rem;font-weight:800;letter-spacing:-.01em;margin-top:8px}
 .prose p,.prose li{color:var(--muted);line-height:1.55}
 .prose ul{padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
 .prose .eff{font-size:.875rem;color:var(--faint)}
-.prose pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:.8125rem;line-height:1.5;color:var(--muted);background:var(--fill);border-radius:12px;padding:12px}
+.prose pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:.8125rem;line-height:1.5;color:var(--muted);background:var(--fill);border-radius:12px;padding:12px;-webkit-user-select:text;user-select:text}
 .prose a,.link{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
 .welcome{display:flex;flex-direction:column;gap:20px}
 .mark{width:64px;height:64px;border-radius:16px;background:var(--fg);color:var(--bg);display:grid;place-items:center}
@@ -212,13 +250,19 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
           </button>
           <div class="head">
             <h1 id="phase" aria-live="polite">Ready to breathe</h1>
-            <p class="sub" id="sub">Steady · 4s in, 6s out · 5 min</p>
+            <p class="coach" id="coach" hidden></p>
+            <p class="sub" id="sub">Works best at the first hint of queasiness.</p>
             <div class="track" aria-hidden="true"><span id="bar"></span></div>
           </div>
           <button class="hint" id="hint" type="button" aria-haspopup="dialog" hidden>
             <svg class="ico lead" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle class="solid" cx="12" cy="7.75" r="1.1"/></svg>
             <span id="hintText"></span>
             <svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+          <button class="moderow" id="pickMode" type="button" aria-haspopup="dialog">
+            <span class="mi" id="modeIcon"></span>
+            <span><b id="modeTitle">Watch the screen</b><small id="modeDesc">Follow the light. Hold the phone at eye level.</small></span>
+            <svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="picks">
             <button class="pick" id="pickPace" type="button" aria-haspopup="dialog">
@@ -264,6 +308,35 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
       </div>
     </section>
 
+    <section class="screen page" id="tab-activity" aria-label="Activity" hidden>
+      <div class="page-in gut">
+        <h1 class="large">Activity</h1>
+        <div class="tiles">
+          <div class="stat"><span class="k">Sessions</span><span class="v" id="statSessions">0</span></div>
+          <div class="stat"><span class="k">Minutes</span><span class="v" id="statMinutes">0</span></div>
+          <div class="stat"><span class="k">Avg change</span><span class="v" id="statAvg">—</span></div>
+        </div>
+        <p class="fine" style="margin-top:-16px">Change is your after rating minus your before rating, on a 0 to 10 scale. Lower is better.</p>
+        <div class="menu">
+          <label class="srow" for="optCheck">
+            <span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+            <span class="tx"><b>Before-and-after check-ins</b><small>Rate how you feel from 0 to 10 when you start and finish.</small></span>
+            <input class="vh" type="checkbox" role="switch" id="optCheck" checked><span class="switch" aria-hidden="true"></span>
+          </label>
+        </div>
+        <section class="block" aria-labelledby="recentH">
+          <h2 id="recentH">Recent sessions</h2>
+          <p class="empty" id="actEmpty">No sessions yet. Each session you finish shows up here, with your ratings if you use check-ins.</p>
+          <ul class="list" id="actList"></ul>
+        </section>
+        <div class="actions" id="actTools" hidden>
+          <button class="btn small" id="actCopy" type="button" data-variant="secondary">Copy as text</button>
+          <button class="btn small" id="actClear" type="button" data-variant="secondary">Clear history</button>
+        </div>
+        <p class="fine">Your sessions and ratings stay on this phone. They're never sent anywhere.</p>
+      </div>
+    </section>
+
     <section class="screen page" id="tab-help" aria-label="Help" hidden>
       <div class="page-in gut">
         <h1 class="large">Help</h1>
@@ -272,6 +345,8 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
           <ul class="list">
             <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></span>
               <span class="tx"><b>Eyes on the horizon</b><small>Get outside if you can and look at the horizon or the shoreline. It beats any screen.</small></span></li>
+            <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M4.5 7.5l2 2M17.5 14.5l2 2M3 12h3M18 12h3M4.5 16.5l2-2M17.5 9.5l2-2"/><circle cx="12" cy="12" r="3"/></svg></span>
+              <span class="tx"><b>Start early</b><small>Breathe at the first hint of queasiness, not once you're already sick.</small></span></li>
             <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13.5h18l-2.6 5.5H5.6z"/><path d="M7.5 13.5v-4h9v4"/><path d="M12 9.5V5"/></svg></span>
               <span class="tx"><b>Midships and low</b><small>Motion is usually gentlest near the middle of the ship and on lower decks.</small></span></li>
             <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.5h10.5a2.75 2.75 0 1 0-2.75-2.75"/><path d="M3 12.5h15a3 3 0 1 1-3 3"/><path d="M3 16.5h6"/></svg></span>
@@ -285,7 +360,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
             <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/></svg></span>
               <span class="tx"><b>Sip water</b><small>Small sips, often. Go easy on alcohol and heavy meals.</small></span></li>
             <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A7.6 7.6 0 1 1 9.4 4.5a6 6 0 0 0 10.1 10.1z"/></svg></span>
-              <span class="tx"><b>Lie down, eyes closed</b><small>If it gets bad, lying still with your eyes closed can help.</small></span></li>
+              <span class="tx"><b>Lie down, eyes closed</b><small>If it gets bad, lie still with your eyes closed. The Eyes closed mode keeps your breathing on pace.</small></span></li>
           </ul>
         </section>
         <div class="callout">
@@ -316,9 +391,20 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 13h6.5M16 13h6.5"/><circle cx="12" cy="13" r="4"/></svg>Breathe</button>
     <button class="tab" type="button" role="tab" id="tabbtn-motion" data-tab="motion" aria-controls="tab-motion" aria-selected="false" tabindex="-1">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 9a9.5 9.5 0 0 0 17 0"/><path d="M12 3.5v10"/><circle class="solid" cx="12" cy="15" r="1.9"/></svg>Motion</button>
+    <button class="tab" type="button" role="tab" id="tabbtn-activity" data-tab="activity" aria-controls="tab-activity" aria-selected="false" tabindex="-1">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 3.5V8H8"/><path d="M12 7.5V12l3 2"/></svg>Activity</button>
     <button class="tab" type="button" role="tab" id="tabbtn-help" data-tab="help" aria-controls="tab-help" aria-selected="false" tabindex="-1">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/></svg>Help</button>
   </nav>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="veil" id="veil" aria-hidden="true">
+  <div class="veil-in">
+    <p class="veil-title" id="veilTitle">Look up at the horizon</p>
+    <p class="veil-phase" id="veilPhase"></p>
+    <p class="veil-sub" id="veilSub">Tap to see the screen.</p>
+  </div>
 </div>
 
 <dialog class="sheet" id="sheet" aria-labelledby="sheetTitle">
@@ -334,13 +420,18 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
 </dialog>
 
 <template id="t-how">
-  <p>Slow, steady breathing and a clear view of the horizon are two of the simplest things to try at sea. {{APP_NAME}} puts both on one screen.</p>
-  <h3>Breathe with the light</h3>
-  <p>Breathe in through your nose as the light grows and out slowly as it settles. The number counts down each half of the breath, and the bar under the title tracks the session.</p>
-  <h3>Watch the horizon</h3>
-  <p>The line on screen follows your phone's motion sensors, so it stays level with the real horizon while the boat rolls and pitches. If it drifts, tap the level button to re-center it.</p>
-  <h3>Put the phone down</h3>
-  <p>Turn on Sound and you can stop looking at the screen: breathe in as the swell builds and out as it washes back, with your eyes on the real horizon.</p>
+  <p>Slow belly breathing and a clear view of the horizon are two of the simplest things to try at sea. {{APP_NAME}} puts both on one screen. It works best if you start at the first hint of queasiness.</p>
+  <h3>Breathe into your belly</h3>
+  <p>Breathe in through your nose as the light grows, letting your belly rise rather than your chest. Breathe out slowly through your mouth as it settles. The number counts down each half of the breath.</p>
+  <h3>Pick how you want to follow it</h3>
+  <ul>
+    <li><b>Watch the screen:</b> follow the light on the horizon. Hold the phone up at eye level, not down in your lap. The line follows your phone's motion sensors, so it stays level with the real horizon.</li>
+    <li><b>Look up:</b> get the rhythm on screen for a couple of breaths, then the screen dims and asks you to watch the real horizon. Sound or taps keep time.</li>
+    <li><b>Eyes closed:</b> for lying down. The screen goes dark and sound or taps keep time.</li>
+  </ul>
+  <p>You can switch modes at any time, even in the middle of a session.</p>
+  <h3>Check in</h3>
+  <p>With check-ins on, you rate how you feel from 0 to 10 when you start and when you finish. Activity shows how your sessions went, so you can see what works for you. Your ratings stay on your phone.</p>
 </template>
 
 <template id="t-motionhow">
@@ -358,6 +449,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     <li>Talk to a doctor or pharmacist about motion sickness, and before making any decision about medication or your health.</li>
     <li>If slow breathing makes you dizzy, light-headed or uncomfortable, stop and breathe normally.</li>
     <li>Stay aware of your surroundings and keep a hand free to hold on when the deck is moving.</li>
+    <li>Only use Eyes closed when you're sitting or lying somewhere safe.</li>
     <li>Don't use {{APP_NAME}} while you're on watch or lookout, driving, operating machinery, or doing anything that needs your full attention.</li>
     <li>Follow crew instructions and safety signs at all times.</li>
   </ul>
@@ -371,15 +463,15 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
 
 <template id="t-welcome">
   <div class="welcome">
-    <div class="mark" aria-hidden="true"><svg viewBox="0 0 44 44"><path d="M0 24h44" stroke="currentColor" stroke-width="3"/><circle cx="22" cy="24" r="8.5" fill="currentColor"/><circle cx="22" cy="24" r="3" class="dot"/></svg></div>
-    <p class="lead">{{APP_NAME}} helps you feel steadier at sea with slow breathing and a steady horizon.</p>
+    <div class="mark" aria-hidden="true"><svg viewBox="0 0 44 44"><path d="M0 24h44" stroke="currentColor" stroke-width="3"/><circle cx="22" cy="24" r="8.5" fill="currentColor"/></svg></div>
+    <p class="lead">{{APP_NAME}} helps you feel steadier at sea with slow belly breathing and a steady horizon.</p>
     <ul class="list">
       <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-5 5-5 7.5 0s5 5 7.5 0 3.5-3.4 5-2"/></svg></span>
-        <span class="tx"><b>Breathe with the light</b><small>In as it grows, out as it settles.</small></span></li>
+        <span class="tx"><b>Breathe with the light</b><small>Into your belly as it grows, slowly out as it settles.</small></span></li>
+      <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M4.5 7.5l2 2M17.5 14.5l2 2M3 12h3M18 12h3M4.5 16.5l2-2M17.5 9.5l2-2"/><circle cx="12" cy="12" r="3"/></svg></span>
+        <span class="tx"><b>Start early</b><small>It works best at the first hint of queasiness.</small></span></li>
       <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></span>
-        <span class="tx"><b>Keep your eyes on the horizon</b><small>The real one is best. The line on screen follows the boat.</small></span></li>
-      <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a8 8 0 0 1 0 11"/></svg></span>
-        <span class="tx"><b>Put the phone down</b><small>Turn on Sound and follow the swell instead of the screen.</small></span></li>
+        <span class="tx"><b>Look up when you can</b><small>The real horizon beats any screen. Look up and Eyes closed modes keep time with sound or taps.</small></span></li>
     </ul>
     <div class="safe">
       <b>Safety first</b>
@@ -410,7 +502,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     return {
       phi: Math.atan2(sx, sy),                              // horizon rotation on screen, radians, clockwise +
       roll: Math.asin(Math.max(-1, Math.min(1, -sx)))*R2D,  // heel in degrees, + = right side (starboard) down
-      psi: Math.atan2(sy, sz)*R2D,                          // rotation about the screen's left-right axis, + = bow up
+      psi: Math.atan2(sy, sz)*R2D,                          // rotation about the screen's left-right axis, + = bow up, 90 = upright
       planar: Math.sqrt(sx*sx + sy*sy)                      // 0 = lying flat, 1 = upright
     };
   }
@@ -420,6 +512,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
   function fmt(sec){ sec = Math.max(0, Math.floor(sec)); var m = Math.floor(sec/60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
   function el(tag, cls){ var e = document.createElement(tag); if (cls) e.className = cls; return e; }
   function quiet(p){ if (p && typeof p.catch === 'function') p.catch(function(){}); }
+  function signed(n, digits){ var v = digits ? Math.abs(n).toFixed(digits) : String(Math.abs(n)); return (n > 0 ? '+' : n < 0 ? '−' : '') + v; }
 
   /* ---------- platform ---------- */
   var Cap = window.Capacitor;
@@ -445,9 +538,17 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
   var panel = $('panel'), topbar = $('topbar');
   var go = $('go'), fab = $('recenter');
   var pill = $('state'), pillText = $('stateText'), hint = $('hint'), hintText = $('hintText');
-  var phaseEl = $('phase'), subEl = $('sub'), barEl = $('bar');
+  var phaseEl = $('phase'), coachEl = $('coach'), subEl = $('sub'), barEl = $('bar');
   var out = { roll:$('roll'), rollSub:$('rollSub'), pitch:$('pitch'), pitchSub:$('pitchSub'),
               period:$('period'), periodSub:$('periodSub'), peak:$('peak'), peakSub:$('peakSub'), chip:$('chip') };
+
+  /* ---------- icons ---------- */
+  var ICON = {
+    screen: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M7 12h10"/><circle class="solid" cx="12" cy="12" r="1.8"/>',
+    horizon: '<path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/>',
+    closed: '<path d="M3 10.5c2.5 3.5 5.5 5 9 5s6.5-1.5 9-5"/><path d="M6.5 14l-1.5 2.5M12 15.5v3M17.5 14l1.5 2.5"/>'
+  };
+  function svgIcon(name){ return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' + ICON[name] + '</svg>'; }
 
   /* ---------- settings ---------- */
   var PACES = [
@@ -456,7 +557,13 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     {name:'Deep',   i:5, e:7, bpm:'5',   wave:'M2 12Q9 0 16 12T30 12'}
   ];
   var LENGTHS = [{m:3, d:'A quick reset'}, {m:5, d:'A full session'}, {m:10, d:'For a long crossing'}];
-  var S = { pace:1, len:5, sound:false, haptics:!!Haptics };
+  var MODES = {
+    screen:  {title:'Watch the screen', short:'Screen',      desc:'Follow the light. Hold the phone at eye level.'},
+    horizon: {title:'Look up',          short:'Look up',     desc:'Get the rhythm here, then watch the real horizon.'},
+    closed:  {title:'Eyes closed',      short:'Eyes closed', desc:'The screen goes dark. Follow the sound or taps.'}
+  };
+  var MODE_ORDER = ['screen', 'horizon', 'closed'];
+  var S = { pace:1, len:5, sound:false, haptics:!!Haptics, mode:'screen', checkins:true };
   function load(){
     try {
       var s = JSON.parse(localStorage.getItem('sealegs.v1') || '{}');
@@ -464,12 +571,20 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
       if (LENGTHS.some(function(l){ return l.m === +s.len; })) S.len = +s.len;
       if (typeof s.snd === 'boolean') S.sound = s.snd;
       if (typeof s.buzz === 'boolean') S.haptics = s.buzz;
+      if (MODES[s.mode]) S.mode = s.mode;
+      if (typeof s.checkins === 'boolean') S.checkins = s.checkins;
     } catch(e){}
   }
   function save(){
-    try { localStorage.setItem('sealegs.v1', JSON.stringify({ pace:String(S.pace), len:String(S.len), snd:S.sound, buzz:S.haptics })); } catch(e){}
+    try { localStorage.setItem('sealegs.v1', JSON.stringify({ pace:String(S.pace), len:String(S.len), snd:S.sound, buzz:S.haptics, mode:S.mode, checkins:S.checkins })); } catch(e){}
   }
+  function cuesOn(){ return S.sound || (S.haptics && canFeel); }
   function updatePicks(){
+    var m = MODES[S.mode];
+    $('modeIcon').innerHTML = svgIcon(S.mode);
+    $('modeTitle').textContent = m.title;
+    $('modeDesc').textContent = m.desc;
+    $('pickMode').setAttribute('aria-label', 'Mode: ' + m.title);
     $('paceLabel').textContent = PACES[S.pace].name;
     $('lenLabel').textContent = S.len + ' min';
     $('cueLabel').textContent = S.sound ? 'Sound' : 'Silent';
@@ -478,6 +593,15 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     $('pickPace').setAttribute('aria-label', 'Pace: ' + PACES[S.pace].name);
     $('pickLen').setAttribute('aria-label', 'Length: ' + S.len + ' minutes');
     $('pickCues').setAttribute('aria-label', 'Cues: ' + (S.sound ? 'sound on' : 'sound off'));
+    $('optCheck').checked = S.checkins;
+  }
+  // Look up and Eyes closed need something to follow besides the screen
+  function ensureCues(){
+    if (S.mode === 'screen' || cuesOn()) return;
+    S.sound = true; sound.init();
+    if (Haptics) S.haptics = true;
+    save(); updatePicks();
+    toast('Sound is on, so you can follow without looking.');
   }
 
   /* ---------- theme colours for the canvases ---------- */
@@ -501,6 +625,13 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     if (typeof window.orientation === 'number') return window.orientation;
     var so = window.screen && screen.orientation;
     return so && typeof so.angle === 'number' ? so.angle : 0;
+  }
+
+  /* ---------- toast ---------- */
+  var toastEl = $('toast'), toastTimer = 0;
+  function toast(msg){
+    toastEl.textContent = msg; toastEl.classList.add('on');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function(){ toastEl.classList.remove('on'); }, 4200);
   }
 
   /* ---------- motion sensor ---------- */
@@ -673,6 +804,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
         else { g.linearRampToValueAtTime(0.02, t + dur); f.exponentialRampToValueAtTime(200, t + dur); }
       },
       chime: function(phase){ if (on()) tone(phase === 'in' ? 659.25 : 440, phase === 'in' ? 0.07 : 0.05, 0); },
+      lookup: function(){ if (on()){ tone(523.25, 0.06, 0); tone(659.25, 0.06, 0.16); tone(783.99, 0.06, 0.32); } },
       finale: function(){ if (on()){ tone(523.25, 0.07, 0); tone(783.99, 0.06, 0.18); } },
       stop: function(){
         if (!A) return;
@@ -683,10 +815,16 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
   function feel(kind){
     if (!S.haptics) return;
     if (Haptics){
-      try { quiet(kind === 'done' ? Haptics.notification({type:'SUCCESS'}) : Haptics.impact({style: kind === 'in' ? 'LIGHT' : 'MEDIUM'})); } catch(e){}
+      try {
+        if (kind === 'done') quiet(Haptics.notification({type:'SUCCESS'}));
+        else if (kind === 'lookup'){ quiet(Haptics.impact({style:'MEDIUM'})); setTimeout(function(){ quiet(Haptics.impact({style:'MEDIUM'})); }, 180); }
+        else quiet(Haptics.impact({style: kind === 'in' ? 'LIGHT' : 'MEDIUM'}));
+      } catch(e){}
       return;
     }
-    if (canVibrate){ try { navigator.vibrate(kind === 'in' ? 40 : kind === 'out' ? [20, 70, 20] : [40, 100, 40, 100, 40]); } catch(e){} }
+    if (canVibrate){
+      try { navigator.vibrate(kind === 'in' ? 40 : kind === 'out' ? [20, 70, 20] : kind === 'lookup' ? [60, 90, 60] : [40, 100, 40, 100, 40]); } catch(e){}
+    }
   }
 
   /* ---------- keep the screen on while breathing ---------- */
@@ -698,19 +836,62 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
   }
   document.addEventListener('visibilitychange', function(){ if (B.running && document.visibilityState === 'visible' && !KeepAwake) awake(true); });
 
+  /* ---------- the veil: dims the screen in Look up and Eyes closed ---------- */
+  var veil = $('veil'), V = { on:false, kind:null, quietAt:0, peekUntil:0 };
+  function showVeil(kind){
+    V.on = true; V.kind = kind;
+    veil.classList.toggle('deep', kind === 'closed');
+    var follow = S.sound && S.haptics && canFeel ? 'the sound and taps' : S.sound ? 'the sound' : 'the taps';
+    $('veilTitle').textContent = kind === 'closed' ? 'Close your eyes' : 'Look up at the horizon';
+    $('veilSub').textContent = 'Keep breathing with ' + follow + '. Tap to see the screen.';
+    $('veilPhase').textContent = B.phase === 'in' ? 'Breathe in' : B.phase === 'out' ? 'Breathe out' : '';
+    veil.classList.remove('quiet'); veil.classList.add('on'); veil.setAttribute('aria-hidden', 'false');
+    V.quietAt = performance.now() + (kind === 'closed' ? 5000 : 8000);
+  }
+  function hideVeil(){ V.on = false; veil.classList.remove('on', 'quiet'); veil.setAttribute('aria-hidden', 'true'); }
+  veil.addEventListener('click', function(){ if (!V.on) return; hideVeil(); V.peekUntil = performance.now() + 6000; });
+  function veilTick(now){
+    if (!B.running || B.mode === 'screen'){ if (V.on) hideVeil(); return; }
+    if (sheet.open){ if (V.on) hideVeil(); return; }
+    if (!V.on && now >= B.veilAt && now >= V.peekUntil){
+      showVeil(B.mode);
+      if (!B.veilShown){ B.veilShown = true; sound.lookup(); feel('lookup'); }
+    }
+    if (V.on && V.quietAt && now >= V.quietAt){ veil.classList.add('quiet'); V.quietAt = 0; }
+  }
+
+  /* ---------- eye-level tip ---------- */
+  var tipLowSince = 0, tipLastAt = 0, tipShownOnce = false;
+  function eyeLevelTick(now){
+    if (!(B.running && B.mode === 'screen' && sensor === 'live' && lastTilt && current === 'breathe')){ tipLowSince = 0; return; }
+    var low = mode === 'flat' || lastTilt.psi < 50;
+    if (!low){ tipLowSince = 0; return; }
+    if (!tipLowSince) tipLowSince = now;
+    if (now - tipLowSince > 2500 && now - tipLastAt > 30000){ tipLastAt = now; toast('Lift the phone to eye level, near the real horizon.'); }
+  }
+
   /* ---------- breathing ---------- */
-  var B = { running:false, done:false, start:0, cycle:0, breaths:0, phase:'', lastSec:-1, pace:PACES[1], target:300 };
+  var COACH = { in:'Through your nose, into your belly', out:'Slowly out through your mouth' };
+  var B = { running:false, done:false, start:0, cycle:0, breaths:0, phase:'', lastSec:-1, pace:PACES[1], target:300,
+            mode:'screen', veilAt:Infinity, veilShown:false, before:null };
   var IDLE = { k:0, phase:'', left:0, prog:0, done:false }, DONE = { k:0, phase:'', left:0, prog:0, done:true };
-  function idleSub(){ var p = PACES[S.pace]; return p.name + ' · ' + p.i + 's in, ' + p.e + 's out · ' + S.len + ' min'; }
+  function cycleMs(){ return (B.pace.i + B.pace.e)*1000; }
   function setBar(p){ barEl.style.transform = 'scaleX(' + clamp(p, 0, 1) + ')'; }
   function setButton(label, variant){ go.textContent = label; go.setAttribute('data-variant', variant); }
-  function showIdle(){ phaseEl.textContent = 'Ready to breathe'; subEl.textContent = idleSub(); setBar(0); setButton('Start breathing', 'primary'); }
+  function showIdle(){
+    phaseEl.textContent = 'Ready to breathe'; coachEl.hidden = true;
+    subEl.textContent = 'Works best at the first hint of queasiness.';
+    setBar(0); setButton('Start breathing', 'primary');
+  }
   function phaseLeft(now){
     var t = (now - B.cycle)/1000, inh = B.pace.i, cyc = inh + B.pace.e;
     return Math.max(0.2, t < inh ? inh - t : cyc - t);
   }
   function onPhase(phase, dur){
-    phaseEl.textContent = phase === 'in' ? 'Breathe in' : 'Breathe out';
+    var label = phase === 'in' ? 'Breathe in' : 'Breathe out';
+    phaseEl.textContent = label;
+    coachEl.textContent = COACH[phase]; coachEl.hidden = false;
+    $('veilPhase').textContent = label;
     B.lastSec = -1;
     sound.swell(phase, dur);
     sound.chime(phase);
@@ -735,24 +916,39 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     }
     return { k: phase === 'in' ? ease(p) : 1 - ease(p), phase: phase, left: Math.ceil(phase === 'in' ? inh - t : cyc - t), prog: p, done:false };
   }
-  function startSession(){
+  function warmupFor(m){ return m === 'horizon' ? 2*cycleMs() : m === 'closed' ? cycleMs() : Infinity; }
+  function startSession(before){
     var now = performance.now();
-    B.pace = PACES[S.pace]; B.target = S.len*60;
+    B.pace = PACES[S.pace]; B.target = S.len*60; B.mode = S.mode; B.before = before == null ? null : before;
     B.running = true; B.done = false; B.start = now; B.cycle = now; B.breaths = 0; B.phase = ''; B.lastSec = -1;
+    B.veilAt = now + warmupFor(B.mode); B.veilShown = false; V.peekUntil = 0;
     setButton('End session', 'secondary');
     awake(true);
+    if (B.mode === 'screen' && !tipShownOnce && !(sensor === 'live' && lastTilt && lastTilt.psi >= 50)){
+      tipShownOnce = true; toast('Hold the phone up at eye level, not down in your lap.');
+    }
+    if (B.mode === 'horizon') toast('Get the rhythm here first. You’ll be asked to look up.');
+    if (B.mode === 'closed') toast('One breath with the light, then close your eyes.');
   }
-  function stopSession(){
+  function sessionRecord(now, complete){
+    return { t: Date.now(), mode: B.mode, pace: B.pace.name, len: S.len, mins: Math.round((now - B.start)/6000)/10,
+             before: B.before, after: null, complete: complete };
+  }
+  function endSession(){
+    var now = performance.now(), rec = sessionRecord(now, false), longEnough = (now - B.start) >= 60000;
     B.running = false; B.done = false; B.phase = '';
-    showIdle(); sound.stop(); awake(false);
+    showIdle(); sound.stop(); awake(false); hideVeil();
+    if (longEnough){ if (S.checkins) askAfter(rec); else saveRec(rec); }
   }
   function finish(now){
+    var rec = sessionRecord(now, true);
     B.running = false; B.done = true; B.phase = '';
-    phaseEl.textContent = 'Session complete';
+    phaseEl.textContent = 'Session complete'; coachEl.hidden = true;
     subEl.textContent = B.breaths + ' breaths in ' + fmt((now - B.start)/1000);
     setBar(1); setButton('Go again', 'primary');
     sound.stop(); sound.finale(); feel('done');
-    awake(false);
+    awake(false); hideVeil();
+    if (S.checkins) askAfter(rec); else saveRec(rec);
   }
   function settingsChanged(paceChanged){
     if (B.running){
@@ -761,14 +957,105 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     } else { B.done = false; showIdle(); }
     updatePicks(); save();
   }
+  function setMode(m){
+    if (!MODES[m]) return;
+    S.mode = m; ensureCues();
+    if (B.running && B.mode !== m){
+      B.mode = m; hideVeil(); B.veilShown = false; V.peekUntil = 0;
+      B.veilAt = m === 'screen' ? Infinity : performance.now() + cycleMs();
+    }
+    updatePicks(); save();
+  }
   go.addEventListener('click', function(){
     startSensor();
-    if (S.sound) sound.init();
-    if (B.running) stopSession(); else startSession();
+    if (S.sound || S.mode !== 'screen') sound.init();
+    if (B.running){ endSession(); return; }
+    if (S.mode !== 'screen') ensureCues();
+    if (S.checkins) openSheet('before'); else startSession(null);
   });
   fab.addEventListener('click', recenter);
   $('motionLevel').addEventListener('click', recenter);
   $('motionStart').addEventListener('click', startSensor);
+
+  /* ---------- activity log (stays on this device) ---------- */
+  var LOG_KEY = 'sealegs.log.v1', pendingRec = null;
+  function loadLog(){ try { var a = JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch(e){ return []; } }
+  function saveRec(rec){
+    if (!rec || rec.saved) return;
+    rec.saved = true;
+    var a = loadLog();
+    a.unshift({ t:rec.t, mode:rec.mode, pace:rec.pace, len:rec.len, mins:rec.mins, before:rec.before, after:rec.after, complete:rec.complete });
+    if (a.length > 300) a.length = 300;
+    try { localStorage.setItem(LOG_KEY, JSON.stringify(a)); } catch(e){}
+    renderActivity();
+  }
+  function askAfter(rec){ pendingRec = rec; openSheet('after'); }
+  function when(t){
+    var d = new Date(t);
+    try { return d.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'}) + ' · ' + d.toLocaleTimeString(undefined, {hour:'numeric', minute:'2-digit'}); }
+    catch(e){ return d.toISOString().slice(0, 16).replace('T', ' '); }
+  }
+  function renderActivity(){
+    var a = loadLog(), list = $('actList');
+    var rated = a.filter(function(r){ return r.before != null && r.after != null; });
+    $('statSessions').textContent = String(a.length);
+    $('statMinutes').textContent = String(Math.round(a.reduce(function(s, r){ return s + (+r.mins || 0); }, 0)));
+    $('statAvg').textContent = rated.length ? signed(rated.reduce(function(s, r){ return s + (r.after - r.before); }, 0)/rated.length, 1) : '—';
+    $('actEmpty').hidden = a.length > 0; $('actTools').hidden = a.length === 0;
+    list.textContent = '';
+    a.slice(0, 60).forEach(function(r){
+      var li = el('li', 'item session');
+      var m = MODES[r.mode] || MODES.screen;
+      li.innerHTML = '<span class="ic">' + svgIcon(MODES[r.mode] ? r.mode : 'screen') + '</span><span class="tx"><b></b><small></small></span>';
+      li.querySelector('b').textContent = when(r.t);
+      var bits = [m.short, r.pace, (r.mins >= 1 ? Math.round(r.mins) : r.mins) + ' min'];
+      if (r.before != null && r.after != null) bits.push(r.before + ' → ' + r.after);
+      else if (r.before != null) bits.push('started at ' + r.before);
+      li.querySelector('small').textContent = bits.join(' · ');
+      if (r.before != null && r.after != null){
+        var d = r.after - r.before, chip = el('span', 'delta' + (d < 0 ? ' down' : d > 0 ? ' up' : ''));
+        chip.textContent = d === 0 ? '0' : signed(d);
+        chip.setAttribute('aria-label', d < 0 ? 'down ' + (-d) : d > 0 ? 'up ' + d : 'no change');
+        li.appendChild(chip);
+      } else li.appendChild(el('span'));
+      list.appendChild(li);
+    });
+  }
+  function logText(){
+    var a = loadLog(), rated = a.filter(function(r){ return r.before != null && r.after != null; });
+    var lines = [APP + ' sessions'];
+    a.forEach(function(r){
+      var d = new Date(r.t), stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' +
+        String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      var s = stamp + ' · ' + (MODES[r.mode] || MODES.screen).short + ' · ' + r.pace + ' · ' + r.mins + ' min';
+      if (r.before != null) s += ' · before ' + r.before;
+      if (r.after != null) s += ' · after ' + r.after;
+      if (r.before != null && r.after != null) s += ' · change ' + (r.after - r.before);
+      lines.push(s);
+    });
+    if (rated.length) lines.push('Average change: ' + (rated.reduce(function(s, r){ return s + (r.after - r.before); }, 0)/rated.length).toFixed(1) + ' over ' + rated.length + ' rated sessions');
+    return lines.join('\n');
+  }
+  $('optCheck').addEventListener('change', function(){ S.checkins = $('optCheck').checked; save(); });
+  $('actCopy').addEventListener('click', function(){
+    var text = logText(), btn = $('actCopy');
+    function done(){ btn.textContent = 'Copied'; setTimeout(function(){ btn.textContent = 'Copy as text'; }, 2000); }
+    function fallback(){ exportText = text; openSheet('export'); }
+    try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback(); } catch(e){ fallback(); }
+  });
+  var clearArmed = 0;
+  $('actClear').addEventListener('click', function(){
+    var btn = $('actClear');
+    if (!clearArmed){
+      btn.textContent = 'Tap again to clear';
+      clearArmed = setTimeout(function(){ clearArmed = 0; btn.textContent = 'Clear history'; }, 4000);
+      return;
+    }
+    clearTimeout(clearArmed); clearArmed = 0;
+    try { localStorage.removeItem(LOG_KEY); } catch(e){}
+    btn.textContent = 'Clear history';
+    renderActivity();
+  });
 
   /* ---------- tabs ---------- */
   var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
@@ -782,6 +1069,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
       if (on && focus) t.focus();
     });
     current = name;
+    if (name === 'activity') renderActivity();
   }
   tabs.forEach(function(t, i){
     t.addEventListener('click', function(){ showTab(t.getAttribute('data-tab')); });
@@ -796,6 +1084,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
   /* ---------- bottom sheets ---------- */
   var sheet = $('sheet'), sheetTitle = $('sheetTitle'), sheetBody = $('sheetBody'), sheetClose = $('sheetClose'), sheetBack = $('sheetBack');
   var sheetState = { name:null, locked:false, back:null, opener:null };
+  var exportText = '';
   function tpl(id){
     return function(body){
       var wrap = el('div', 'prose gut');
@@ -804,11 +1093,29 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     };
   }
   function noteP(text){ var p = el('p', 'fine gut'); p.textContent = text; return p; }
+  function optButton(checked){
+    var b = el('button', 'opt'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(checked));
+    if (checked) b.setAttribute('data-autofocus', '');
+    return b;
+  }
+  function renderMode(body){
+    var g = el('div', 'opts gut'); g.setAttribute('role', 'radiogroup'); g.setAttribute('aria-label', 'Mode');
+    MODE_ORDER.forEach(function(id){
+      var m = MODES[id], b = optButton(S.mode === id);
+      b.innerHTML = '<span class="opt-ic">' + svgIcon(id) + '</span><span class="opt-tx"><b>' + m.title + (id === 'horizon' ? ' <em class="badge">Best at sea</em>' : '') + '</b><small>' +
+        (id === 'screen' ? 'Follow the light on the horizon. Hold the phone up at eye level, not in your lap.'
+         : id === 'horizon' ? 'Get the rhythm on screen, then the screen dims and you watch the real horizon. Sound or taps keep time.'
+         : 'For lying down. The screen goes dark and sound or taps keep time.') + '</small></span><span></span>';
+      b.addEventListener('click', function(){ setMode(id); closeSheet(); });
+      g.appendChild(b);
+    });
+    body.appendChild(g);
+    body.appendChild(noteP('Switch any time, even in the middle of a session. Look up and Eyes closed turn the sound on if both sound and haptics are off.'));
+  }
   function renderPace(body){
     var g = el('div', 'opts gut'); g.setAttribute('role', 'radiogroup'); g.setAttribute('aria-label', 'Pace');
     PACES.forEach(function(p, i){
-      var b = el('button', 'opt'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(S.pace === i));
-      if (S.pace === i) b.setAttribute('data-autofocus', '');
+      var b = optButton(S.pace === i);
       b.innerHTML = '<span class="opt-ic"><svg viewBox="0 0 32 24" aria-hidden="true"><path d="' + p.wave + '"/></svg></span>' +
         '<span class="opt-tx"><b>' + p.name + (i === 1 ? ' <em class="badge">Start here</em>' : '') + '</b><small>' + p.bpm + ' breaths a minute</small></span>' +
         '<span class="opt-val"><b>' + p.i + 's in</b><small>' + p.e + 's out</small></span>';
@@ -816,13 +1123,12 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
       g.appendChild(b);
     });
     body.appendChild(g);
-    body.appendChild(noteP('In through the nose as the light grows, slowly out as it settles. Pick whatever feels comfortable.'));
+    body.appendChild(noteP('Breathe in through your nose so your belly rises, then slowly out through your mouth. Pick whatever feels comfortable.'));
   }
   function renderLen(body){
     var g = el('div', 'opts gut'); g.setAttribute('role', 'radiogroup'); g.setAttribute('aria-label', 'Session length');
     LENGTHS.forEach(function(l){
-      var b = el('button', 'opt'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(S.len === l.m));
-      if (S.len === l.m) b.setAttribute('data-autofocus', '');
+      var b = optButton(S.len === l.m);
       b.innerHTML = '<span class="opt-ic">' + l.m + '</span><span class="opt-tx"><b>' + l.m + ' minutes</b><small>' + l.d + '</small></span><span></span>';
       b.addEventListener('click', function(){ S.len = l.m; settingsChanged(false); closeSheet(); });
       g.appendChild(b);
@@ -840,19 +1146,20 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     return lab;
   }
   function renderCues(body){
-    var g = el('div', 'menu gut');
+    var g = el('div', 'menu gut'), warn = noteP('');
+    function check(){ warn.textContent = S.mode !== 'screen' && !cuesOn() ? 'With both off, ' + MODES[S.mode].title + ' has nothing to follow. Turn one on.' : ''; warn.hidden = !warn.textContent; }
     g.appendChild(switchRow('cueSound', 'Ocean sound',
       'Swell builds as you breathe in and washes back as you breathe out.' + (isIOS ? ' The silent switch mutes it.' : ''),
       S.sound, function(v){
-        S.sound = v; save(); updatePicks();
+        S.sound = v; save(); updatePicks(); check();
         if (v){ sound.init(); if (B.running && B.phase) sound.swell(B.phase, phaseLeft(performance.now())); } else sound.stop();
       }, '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a8 8 0 0 1 0 11"/>'));
     if (canFeel){
       g.appendChild(switchRow('cueFeel', Haptics ? 'Haptics' : 'Vibration', 'A light tap each time you switch between in and out.',
-        S.haptics, function(v){ S.haptics = v; save(); if (v) feel('in'); },
+        S.haptics, function(v){ S.haptics = v; save(); check(); if (v) feel('in'); },
         '<rect x="8" y="3.5" width="8" height="17" rx="2"/><path d="M4.5 9v6M19.5 9v6"/>'));
     }
-    body.appendChild(g);
+    body.appendChild(g); body.appendChild(warn); check();
   }
   function renderStatus(body){
     var s = STATUS[statusKey()];
@@ -862,6 +1169,57 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
       b.addEventListener('click', function(){ startSensor(); closeSheet(); });
       var w2 = el('div', 'gut'); w2.appendChild(b); body.appendChild(w2);
     }
+  }
+  function renderScale(body, onPick, intro){
+    body.appendChild(noteP(intro));
+    var wrap = el('div', 'gut'), grid = el('div', 'scale');
+    grid.setAttribute('role', 'group'); grid.setAttribute('aria-label', 'Rating from 0 to 10');
+    for (var n = 0; n <= 10; n++) (function(n){
+      var b = el('button'); b.type = 'button'; b.textContent = String(n);
+      b.setAttribute('aria-label', n + (n === 0 ? ', feeling fine' : n === 10 ? ', about to be sick' : ''));
+      b.addEventListener('click', function(){ onPick(n); });
+      grid.appendChild(b);
+    })(n);
+    var legend = el('div', 'legend'); legend.innerHTML = '<span>0 · feeling fine</span><span>10 · about to be sick</span>';
+    wrap.appendChild(grid); wrap.appendChild(legend); body.appendChild(wrap);
+  }
+  function renderBefore(body){
+    renderScale(body, function(n){ closeSheet(); startSession(n); }, 'Tap a number to start. This helps you see what works for you.');
+    var skip = el('button', 'linkbtn'); skip.type = 'button'; skip.textContent = 'Skip and start';
+    skip.addEventListener('click', function(){ closeSheet(); startSession(null); });
+    body.appendChild(skip);
+  }
+  function renderAfter(body){
+    renderScale(body, function(n){
+      if (!pendingRec) return closeSheet();
+      pendingRec.after = n; saveRec(pendingRec);
+      renderResult(pendingRec);
+    }, B.done ? 'Same scale as before. 0 means you feel fine, 10 means you’re about to be sick.' : 'You stopped early. How do you feel now?');
+    var skip = el('button', 'linkbtn'); skip.type = 'button'; skip.textContent = 'Skip';
+    skip.addEventListener('click', closeSheet);
+    body.appendChild(skip);
+  }
+  function renderResult(rec){
+    sheetTitle.textContent = 'Saved to Activity';
+    sheetBody.textContent = '';
+    var box = el('div', 'result gut'), big = el('p', 'big'), p = el('p');
+    if (rec.before != null){
+      var d = rec.after - rec.before;
+      big.textContent = d < 0 ? 'Down ' + (-d) : d > 0 ? 'Up ' + d : 'No change';
+      p.textContent = 'From ' + rec.before + ' to ' + rec.after + '. Lower is better.';
+    } else { big.textContent = String(rec.after); p.textContent = 'Rate before you start next time to see the change.'; }
+    box.appendChild(big); box.appendChild(p); sheetBody.appendChild(box);
+    var acts = el('div', 'actions gut');
+    var see = el('button', 'btn small'); see.type = 'button'; see.textContent = 'See Activity'; see.setAttribute('data-variant', 'secondary');
+    see.addEventListener('click', function(){ closeSheet(); showTab('activity'); });
+    var ok = el('button', 'btn small'); ok.type = 'button'; ok.textContent = 'Done'; ok.addEventListener('click', closeSheet);
+    acts.appendChild(see); acts.appendChild(ok); sheetBody.appendChild(acts);
+    try { ok.focus({preventScroll:true}); } catch(e){}
+  }
+  function renderExport(body){
+    var wrap = el('div', 'prose gut'), p = el('p'), pre = el('pre');
+    p.textContent = 'Copying is blocked here. Select the text below and copy it yourself.';
+    pre.textContent = exportText; wrap.appendChild(p); wrap.appendChild(pre); body.appendChild(wrap);
   }
   function renderWelcome(body){
     var wrap = el('div', 'gut');
@@ -874,10 +1232,14 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     });
   }
   var SHEETS = {
+    mode:      {title:'How do you want to follow?', render:renderMode},
     pace:      {title:'Choose a pace', render:renderPace},
     len:       {title:'Session length', render:renderLen},
     cues:      {title:'Cues', render:renderCues},
     status:    {title:function(){ return STATUS[statusKey()].title; }, render:renderStatus},
+    before:    {title:'How do you feel right now?', render:renderBefore},
+    after:     {title:'How do you feel now?', render:renderAfter, onClose:function(){ if (pendingRec && !pendingRec.saved) saveRec(pendingRec); pendingRec = null; }},
+    export:    {title:'Your sessions', render:renderExport},
     how:       {title:'How it works', render:tpl('t-how')},
     motionhow: {title:'Reading the motion', render:tpl('t-motionhow')},
     safety:    {title:'Safety', render:tpl('t-safety')},
@@ -896,8 +1258,10 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     var def = SHEETS[name]; if (!def) return;
     opts = opts || {};
     var wasOpen = sheet.open;
+    if (wasOpen && sheetState.name && sheetState.name !== name && SHEETS[sheetState.name].onClose) SHEETS[sheetState.name].onClose();
     if (!wasOpen) sheetState.opener = document.activeElement;
     sheetState.name = name; sheetState.locked = !!def.locked; sheetState.back = opts.back || null;
+    if (V.on) hideVeil();
     renderSheet(name);
     sheetBack.hidden = !sheetState.back;
     sheetClose.hidden = !!(sheetState.locked || sheetState.back);
@@ -911,6 +1275,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
   }
   function closeSheet(){
     if (!sheet.open) return;
+    var closing = sheetState.name;
     sheet.classList.remove('in');
     sheet.style.transition = ''; sheet.style.transform = '';
     var done = false;
@@ -918,6 +1283,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
       if (done) return; done = true;
       sheet.removeEventListener('transitionend', onEnd);
       try { sheet.close(); } catch(e){ sheet.removeAttribute('open'); }
+      if (closing && SHEETS[closing] && SHEETS[closing].onClose) SHEETS[closing].onClose();
       var o = sheetState.opener; sheetState.name = null; sheetState.back = null;
       if (o && o.focus && document.contains(o)){ try { o.focus({preventScroll:true}); } catch(e){} }
     }
@@ -961,17 +1327,19 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     if (t.hasAttribute('data-open')) openSheet(t.getAttribute('data-open'), {back:sheetState.name || null});
     else openSheet(t.getAttribute('data-sheet'));
   });
+  $('pickMode').addEventListener('click', function(){ openSheet('mode'); });
   $('pickPace').addEventListener('click', function(){ openSheet('pace'); });
   $('pickLen').addEventListener('click', function(){ openSheet('len'); });
   $('pickCues').addEventListener('click', function(){ openSheet('cues'); });
   pill.addEventListener('click', function(){ openSheet('status'); });
   hint.addEventListener('click', function(){ openSheet('status'); });
 
-  // Android back button: close a sheet, then go back to Breathe, then leave the app
+  // Android back button: close a sheet, lift the veil, go back to Breathe, then leave the app
   if (AppPlugin){
     try {
       quiet(AppPlugin.addListener('backButton', function(){
         if (sheet.open){ if (sheetState.back) openSheet(sheetState.back); else if (!sheetState.locked) closeSheet(); }
+        else if (V.on){ hideVeil(); V.peekUntil = performance.now() + 6000; }
         else if (current !== 'breathe') showTab('breathe');
         else if (AppPlugin.minimizeApp) quiet(AppPlugin.minimizeApp());
       }));
@@ -1114,6 +1482,8 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
     var st = process(now, dt) || { phi: phiShown, dpsi: 0, alpha: 1 };
     st.br = breathFrame(now);
     st.live = sensor === 'live';
+    veilTick(now);
+    eyeLevelTick(now);
     if (current === 'breathe') drawScene(st);
     else if (current === 'motion') drawClino();
     if (now - lastUI > 250){ lastUI = now; updateUI(); }
@@ -1123,6 +1493,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
   updatePicks();
   showIdle();
   setStatus();
+  renderActivity();
   requestAnimationFrame(frame);
   var welcomed = false;
   try { welcomed = localStorage.getItem('sealegs.welcome.v1') === '1'; } catch(e){}

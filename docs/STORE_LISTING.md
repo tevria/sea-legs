@@ -16,13 +16,16 @@ Slow breathing and a steady horizon on one calm screen. Built by a working marin
 Sea Legs puts two simple things on one screen: a slow breathing guide and a horizon that stays level while the boat moves.
 
 BREATHE WITH THE LIGHT
-A light sits on the horizon. Breathe in as it grows, out as it settles. A countdown and a progress ring keep you on pace. Pick Easy, Steady or Deep, and a 3, 5 or 10 minute session.
+A light sits on the horizon. Breathe into your belly as it grows, slowly out as it settles. A countdown and a progress ring keep you on pace. Pick Easy, Steady or Deep, and a 3, 5 or 10 minute session.
 
 A HORIZON THAT FOLLOWS THE BOAT
 Your phone's motion sensors keep the line level with the real horizon as the ship rolls and pitches.
 
-PUT THE PHONE DOWN
-Turn on the ocean sound and follow the swell instead of the screen. Light haptics mark each breath.
+FOLLOW IT YOUR WAY
+Watch the screen, or get the rhythm and then look up at the real horizon, or lie back with your eyes closed. Ocean sound and light haptics keep time, so you can switch any time, even mid-session.
+
+SEE WHAT WORKS FOR YOU
+Rate how you feel before and after each session. Activity shows how your sessions went. Your ratings stay on your phone.
 
 SHIP MOTION
 Roll, pitch, roll period and peak heel on a clean clinometer. For interest only.
