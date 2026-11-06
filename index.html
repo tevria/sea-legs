@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sea Legs</title>
+<meta name="description" content="Breathe with a gyro-locked horizon to settle seasickness on deck.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0b" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sea Legs">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>
+/* Layout: ride-app map screen. The horizon fills the top like a map, a bottom sheet carries status, pace, length, cues, ship motion and tips, and the main button stays pinned to the bottom. */
+:root{
+  --bg:#ffffff; --float:#ffffff; --fill:#f3f4f6; --fill2:#e6e8eb; --line:#e8e9ec;
+  --fg:#000000; --muted:#5c5f66; --faint:#a2a5ab;
+  --sky:#eef1f4; --sea:#d5dbe2; --swell:#c6ced7; --horizon:#000000;
+  --orb:#ffffff; --orb-ink:#000000; --knob:#ffffff;
+  --shadow:rgba(0,0,0,.14); --lift:rgba(0,0,0,.07);
+  --ok:#05944f; --ok-bg:#e7f4ed; --ok-ink:#03703c;
+  --warn:#e2a012; --warn-bg:#fff5df; --warn-ink:#7d5200;
+  --bad-bg:#ffeeec; --bad-ink:#ab1300;
+  --accent:#276ef1; --accent-bg:#edf3fe; --accent-ink:#1d55c4;
+  --font:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0a0a0b; --float:#202124; --fill:#19191b; --fill2:#2b2c2f; --line:#232427;
+  --fg:#ffffff; --muted:#a5a8ae; --faint:#63666c;
+  --sky:#111316; --sea:#20252b; --swell:#2b3139; --horizon:#ffffff;
+  --orb:#ffffff; --orb-ink:#000000; --knob:#ffffff;
+  --shadow:rgba(0,0,0,.55); --lift:rgba(0,0,0,.5);
+  --ok:#36c77b; --ok-bg:#0e2519; --ok-ink:#5fd395;
+  --warn:#f0b13c; --warn-bg:#2a200e; --warn-ink:#f3c766;
+  --bad-bg:#2f1411; --bad-ink:#ff8d7e;
+  --accent:#5b91f5; --accent-bg:#121f37; --accent-ink:#8fb4fb;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a0a0b; --float:#202124; --fill:#19191b; --fill2:#2b2c2f; --line:#232427;
+  --fg:#ffffff; --muted:#a5a8ae; --faint:#63666c;
+  --sky:#111316; --sea:#20252b; --swell:#2b3139; --horizon:#ffffff;
+  --orb:#ffffff; --orb-ink:#000000; --knob:#ffffff;
+  --shadow:rgba(0,0,0,.55); --lift:rgba(0,0,0,.5);
+  --ok:#36c77b; --ok-bg:#0e2519; --ok-ink:#5fd395;
+  --warn:#f0b13c; --warn-bg:#2a200e; --warn-ink:#f3c766;
+  --bad-bg:#2f1411; --bad-ink:#ff8d7e;
+  --accent:#5b91f5; --accent-bg:#121f37; --accent-ink:#8fb4fb;
+  color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-tap-highlight-color:transparent}
+h1,h2,p{margin:0}
+h1{font-size:clamp(1.75rem,7.4vw,2.25rem);font-weight:800;letter-spacing:-.03em;line-height:1.08;text-wrap:balance}
+h2{font-size:1.25rem;font-weight:800;letter-spacing:-.02em;line-height:1.2;text-wrap:balance}
+svg{display:block}
+.vh{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.ico{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ico .solid{fill:currentColor;stroke:none}
+
+/* the horizon plays the map */
+.stage{position:relative;height:clamp(300px,52vh,540px);background:var(--sky);overflow:hidden}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.top{position:absolute;top:14px;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
+.pill{display:inline-flex;align-items:center;gap:8px;min-width:0;background:var(--float);color:var(--fg);
+  border-radius:999px;box-shadow:0 2px 12px var(--shadow);white-space:nowrap}
+.brand{flex:none;font-weight:800;font-size:1.0625rem;letter-spacing:-.02em;padding:9px 16px}
+.state{font-weight:600;font-size:.875rem;padding:9px 14px 9px 12px}
+.state span{overflow:hidden;text-overflow:ellipsis}
+.state i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.state[data-tone="ok"] i{background:var(--ok)}
+.state[data-tone="warn"] i{background:var(--warn)}
+.state[data-tone="wait"] i{animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{50%{opacity:.2}}
+.fab{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:42px;width:48px;height:48px;padding:0;border:0;
+  border-radius:50%;background:var(--float);color:var(--fg);box-shadow:0 2px 12px var(--shadow);display:grid;place-items:center;cursor:pointer}
+.fab svg{width:22px;height:22px}
+
+/* bottom sheet */
+.sheet{position:relative;margin-top:-22px;background:var(--bg);border-radius:22px 22px 0 0;box-shadow:0 -8px 28px var(--lift)}
+.in{max-width:600px;margin:0 auto;padding-block:26px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:30px}
+.band{height:8px;background:var(--fill)}
+.head{display:flex;flex-direction:column;gap:6px}
+.sub{color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+.track{height:4px;margin-top:10px;border-radius:2px;background:var(--fill2);overflow:hidden}
+.track span{display:block;height:100%;background:var(--fg);transform:scaleX(0);transform-origin:left center}
+.banner{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;align-items:start;padding:14px 16px;border-radius:14px;background:var(--warn-bg)}
+.banner svg{width:22px;height:22px;color:var(--warn-ink)}
+.banner b{display:block;font-weight:700;font-size:.9375rem;line-height:1.35}
+.banner span{display:block;margin-top:3px;font-size:.875rem;color:var(--muted);line-height:1.45}
+.block{display:flex;flex-direction:column;gap:14px}
+.sec-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+
+/* pace, laid out like ride options */
+.opts{display:flex;flex-direction:column;gap:4px;margin-inline:-10px}
+.opt{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px;
+  border:2px solid transparent;border-radius:16px;cursor:pointer;transition:background-color .15s,border-color .15s}
+@media (hover:hover){.opt:hover{background:var(--fill)}}
+input:checked + .opt{border-color:var(--fg);background:transparent}
+.opt-ic{width:52px;height:44px;border-radius:12px;background:var(--fill);display:grid;place-items:center}
+.opt-ic svg{width:32px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.opt-tx{display:flex;flex-direction:column;gap:1px;min-width:0}
+.opt-tx b{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-weight:700;font-size:1.0625rem;letter-spacing:-.01em}
+.opt small{font-size:.875rem;color:var(--muted)}
+.opt-val{display:flex;flex-direction:column;align-items:flex-end;text-align:right;font-variant-numeric:tabular-nums}
+.opt-val b{font-weight:700;font-size:1.0625rem}
+.badge{font-style:normal;font-weight:700;font-size:.6875rem;letter-spacing:.05em;text-transform:uppercase;line-height:1;
+  padding:4px 7px;border-radius:6px;color:var(--accent-ink);background:var(--accent-bg)}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chipopt{display:inline-flex;align-items:center;height:42px;padding:0 20px;border-radius:999px;background:var(--fill);
+  font-weight:700;font-size:.9375rem;cursor:pointer;font-variant-numeric:tabular-nums;transition:background-color .15s,color .15s}
+input:checked + .chipopt{background:var(--fg);color:var(--bg)}
+
+/* list rows */
+.rows,.list{display:flex;flex-direction:column;margin:0;padding:0;list-style:none}
+.row,.item{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;align-items:center;padding-block:13px}
+.row{grid-template-columns:40px minmax(0,1fr) auto;cursor:pointer}
+.row + .row::before,.item + .item::before{content:"";position:absolute;top:0;left:54px;right:0;height:1px;background:var(--line)}
+.ic{width:40px;height:40px;border-radius:50%;background:var(--fill);display:grid;place-items:center}
+.ic svg{width:20px;height:20px}
+.tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tx b{font-weight:700;font-size:1rem;letter-spacing:-.005em}
+.tx small{font-size:.875rem;color:var(--muted);line-height:1.45}
+.switch{position:relative;width:50px;height:30px;border-radius:999px;background:var(--fill2);transition:background-color .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--knob);
+  box-shadow:0 1px 3px var(--shadow);transition:transform .2s,background-color .2s}
+input:checked + .switch{background:var(--fg)}
+input:checked + .switch::after{transform:translateX(20px);background:var(--bg)}
+
+/* ship motion */
+.chip{flex:none;font-weight:700;font-size:.8125rem;line-height:1;padding:7px 11px;border-radius:999px;background:var(--fill);color:var(--muted);white-space:nowrap}
+.chip[data-level="calm"]{background:var(--ok-bg);color:var(--ok-ink)}
+.chip[data-level="moderate"]{background:var(--warn-bg);color:var(--warn-ink)}
+.chip[data-level="heavy"]{background:var(--bad-bg);color:var(--bad-ink)}
+#clino{display:block;width:100%;height:170px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:0;padding:14px 16px;border-radius:16px;background:var(--fill)}
+.stat .k{font-size:.8125rem;font-weight:700;color:var(--muted)}
+.stat .v{font-size:1.75rem;font-weight:800;letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat .s{font-size:.8125rem;color:var(--muted);line-height:1.35}
+.fine{font-size:.875rem;color:var(--muted);line-height:1.5;max-width:62ch}
+
+/* pinned button */
+.dock{position:sticky;bottom:0;z-index:5;background:var(--bg);border-top:1px solid var(--line);
+  padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.btn{display:block;width:100%;max-width:568px;height:56px;margin:0 auto;border:0;border-radius:12px;font:inherit;font-size:1.125rem;
+  font-weight:700;letter-spacing:-.01em;background:var(--fg);color:var(--bg);cursor:pointer;transition:background-color .15s,color .15s,transform .1s}
+.btn:active{transform:scale(.985)}
+.btn[data-variant="secondary"]{background:var(--fill2);color:var(--fg)}
+.btn:focus-visible,.fab:focus-visible,input:focus-visible + .opt,input:focus-visible + .chipopt,input:focus-visible + .switch{outline:3px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <canvas id="scene" role="img" aria-label="Horizon line with a breathing light sitting on it"></canvas>
+  <div class="top">
+    <span class="pill brand">Sea Legs</span>
+    <span class="pill state" id="state" data-tone="idle"><i aria-hidden="true"></i><span id="stateText">Horizon · tap Start</span></span>
+  </div>
+  <button class="fab" id="recenter" type="button" aria-label="Re-center the horizon" hidden>
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle class="solid" cx="12" cy="12" r="2.2"/><path d="M12 1.5V5M12 19v3.5M1.5 12H5M19 12h3.5"/></svg>
+  </button>
+</div>
+
+<main class="sheet">
+  <div class="in">
+    <div class="head">
+      <h1 id="phase" aria-live="polite">Ready to breathe</h1>
+      <p class="sub" id="sub">Steady · 4s in, 6s out · 5 min</p>
+      <div class="track" aria-hidden="true"><span id="bar"></span></div>
+    </div>
+
+    <div class="banner" id="banner" hidden>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle class="solid" cx="12" cy="7.75" r="1.1"/></svg>
+      <div><b id="bannerTitle"></b><span id="bannerText"></span></div>
+    </div>
+
+    <section class="block" aria-labelledby="paceH">
+      <h2 id="paceH">Choose a pace</h2>
+      <div class="opts" role="radiogroup" aria-labelledby="paceH">
+        <input class="vh" type="radio" name="pace" id="pace0" value="0">
+        <label class="opt" for="pace0">
+          <span class="opt-ic"><svg viewBox="0 0 32 24" aria-hidden="true"><path d="M2 12Q5.5 8 9 12T16 12T23 12T30 12"/></svg></span>
+          <span class="opt-tx"><b>Easy</b><small>7.5 breaths a minute</small></span>
+          <span class="opt-val"><b>3s in</b><small>5s out</small></span>
+        </label>
+        <input class="vh" type="radio" name="pace" id="pace1" value="1" checked>
+        <label class="opt" for="pace1">
+          <span class="opt-ic"><svg viewBox="0 0 32 24" aria-hidden="true"><path d="M2 12Q6.67 5 11.33 12T20.67 12T30 12"/></svg></span>
+          <span class="opt-tx"><b>Steady <em class="badge">Recommended</em></b><small>6 breaths a minute</small></span>
+          <span class="opt-val"><b>4s in</b><small>6s out</small></span>
+        </label>
+        <input class="vh" type="radio" name="pace" id="pace2" value="2">
+        <label class="opt" for="pace2">
+          <span class="opt-ic"><svg viewBox="0 0 32 24" aria-hidden="true"><path d="M2 12Q9 0 16 12T30 12"/></svg></span>
+          <span class="opt-tx"><b>Deep</b><small>5 breaths a minute</small></span>
+          <span class="opt-val"><b>5s in</b><small>7s out</small></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="lenH">
+      <h2 id="lenH">Length</h2>
+      <div class="chips" role="radiogroup" aria-labelledby="lenH">
+        <input class="vh" type="radio" name="len" id="len3" value="3"><label class="chipopt" for="len3">3 min</label>
+        <input class="vh" type="radio" name="len" id="len5" value="5" checked><label class="chipopt" for="len5">5 min</label>
+        <input class="vh" type="radio" name="len" id="len10" value="10"><label class="chipopt" for="len10">10 min</label>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="cueH">
+      <h2 id="cueH">Cues</h2>
+      <div class="rows">
+        <label class="row" for="snd">
+          <span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path d="M18.2 6.5a8 8 0 0 1 0 11"/></svg></span>
+          <span class="tx"><b>Ocean sound</b><small>Swell builds as you breathe in and washes back as you breathe out. Put the phone down and watch the real horizon.</small><small id="sndNote" hidden>iPhone's silent switch mutes this.</small></span>
+          <input class="vh" type="checkbox" role="switch" id="snd"><span class="switch" aria-hidden="true"></span>
+        </label>
+        <label class="row" for="buzz" id="buzzRow">
+          <span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3.5" width="8" height="17" rx="2"/><path d="M4.5 9v6M19.5 9v6"/></svg></span>
+          <span class="tx"><b>Vibration</b><small>A tap each time you switch.</small></span>
+          <input class="vh" type="checkbox" role="switch" id="buzz"><span class="switch" aria-hidden="true"></span>
+        </label>
+      </div>
+    </section>
+  </div>
+
+  <div class="band" aria-hidden="true"></div>
+
+  <div class="in">
+    <section class="block" aria-labelledby="motH">
+      <div class="sec-head"><h2 id="motH">Ship motion</h2><span class="chip" id="chip" data-level="none">No reading</span></div>
+      <canvas id="clino" role="img" aria-label="Clinometer showing heel to port or starboard"></canvas>
+      <div class="stats">
+        <div class="stat"><span class="k">Roll</span><span class="v" id="roll">—</span><span class="s" id="rollSub">port / starboard</span></div>
+        <div class="stat"><span class="k">Pitch</span><span class="v" id="pitch">—</span><span class="s" id="pitchSub">bow up / down</span></div>
+        <div class="stat"><span class="k">Roll period</span><span class="v" id="period">—</span><span class="s" id="periodSub">one full roll and back</span></div>
+        <div class="stat"><span class="k">Peak heel</span><span class="v" id="peak">—</span><span class="s" id="peakSub">each side, last 60 s</span></div>
+      </div>
+      <p class="fine">For true ship readings, lay the phone flat with the top toward the bow, or brace it upright facing forward. Handheld, your own movement mixes in. A longer roll period than usual means the ship is sitting more tender.</p>
+    </section>
+  </div>
+
+  <div class="band" aria-hidden="true"></div>
+
+  <div class="in">
+    <section class="block" aria-labelledby="fixH">
+      <h2 id="fixH">Quick fixes on deck</h2>
+      <ul class="list">
+        <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></span>
+          <span class="tx"><b>Eyes on the horizon</b><small>Get outside and fix on the horizon or shoreline. Beats any screen.</small></span></li>
+        <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13.5h18l-2.6 5.5H5.6z"/><path d="M7.5 13.5v-4h9v4"/><path d="M12 9.5V5"/></svg></span>
+          <span class="tx"><b>Midships and low</b><small>Least motion near the ship's centre of rotation.</small></span></li>
+        <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.5h10.5a2.75 2.75 0 1 0-2.75-2.75"/><path d="M3 12.5h15a3 3 0 1 1-3 3"/><path d="M3 16.5h6"/></svg></span>
+          <span class="tx"><b>Fresh air</b><small>Face into it. Stay clear of exhaust and galley smells.</small></span></li>
+        <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><circle class="solid" cx="9" cy="9" r="1"/><circle class="solid" cx="15" cy="9" r="1"/><circle class="solid" cx="9" cy="15" r="1"/><circle class="solid" cx="15" cy="15" r="1"/></svg></span>
+          <span class="tx"><b>Small, dry food</b><small>Crackers or toast. An empty stomach makes it worse.</small></span></li>
+        <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z"/><path d="M16.5 10.5h1.25a2.5 2.5 0 0 1 0 5H16.5"/><path d="M9 3.5V6M12.5 3.5V6"/></svg></span>
+          <span class="tx"><b>Ginger</b><small>Chews, capsules or real ginger ale. Modest but real evidence.</small></span></li>
+        <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle class="solid" cx="12" cy="12" r="2.5"/></svg></span>
+          <span class="tx"><b>P6 pressure point</b><small>Three finger widths below the wrist crease, between the tendons. Press firmly a few minutes each side.</small></span></li>
+        <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/></svg></span>
+          <span class="tx"><b>Sip water</b><small>Small and often. No big gulps.</small></span></li>
+        <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A7.6 7.6 0 1 1 9.4 4.5a6 6 0 0 0 10.1 10.1z"/></svg></span>
+          <span class="tx"><b>Lie down, eyes closed</b><small>If it gets bad, cutting out the visual mismatch can reset you.</small></span></li>
+      </ul>
+      <p class="fine">Gravol (dimenhydrinate) or a scopolamine patch work best taken before you sail and can make you drowsy. Check your company's fitness-for-duty rules before taking anything on watch.</p>
+    </section>
+  </div>
+
+  <div class="dock">
+    <button class="btn" id="go" type="button" data-variant="primary">Start breathing</button>
+  </div>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  var D2R = Math.PI/180, R2D = 180/Math.PI;
+  function $(id){ return document.getElementById(id); }
+
+  /* ---------- motion math (pure) ---------- */
+  // Earth "up" in the phone's own axes (W3C: x right, y toward top, z out of the screen)
+  function upFrom(beta, gamma){
+    var b = beta*D2R, g = gamma*D2R;
+    return [-Math.cos(b)*Math.sin(g), Math.sin(b), Math.cos(b)*Math.cos(g)];
+  }
+  // Tilt in the screen's frame, so landscape works too
+  function tiltOf(u, screenDeg){
+    var t = screenDeg*D2R, c = Math.cos(t), s = Math.sin(t);
+    var sx = u[0]*c - u[1]*s, sy = u[0]*s + u[1]*c, sz = u[2];
+    return {
+      phi: Math.atan2(sx, sy),                              // horizon rotation on screen, radians, clockwise +
+      roll: Math.asin(Math.max(-1, Math.min(1, -sx)))*R2D,  // heel in degrees, + = right side (starboard) down
+      psi: Math.atan2(sy, sz)*R2D,                          // rotation about the screen's left-right axis, + = bow up
+      planar: Math.sqrt(sx*sx + sy*sy)                      // 0 = lying flat, 1 = upright
+    };
+  }
+  function angDiff(a, b){ return ((a - b + 540) % 360) - 180; }
+  function ease(p){ return 0.5 - 0.5*Math.cos(Math.PI*p); }
+  function clamp(v, lo, hi){ return v < lo ? lo : v > hi ? hi : v; }
+  function fmt(sec){ sec = Math.max(0, Math.floor(sec)); var m = Math.floor(sec/60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
+
+  /* ---------- elements ---------- */
+  var scene = $('scene'), sctx = scene.getContext('2d');
+  var clino = $('clino'), cctx = clino.getContext('2d');
+  var go = $('go'), fab = $('recenter');
+  var pill = $('state'), pillText = $('stateText');
+  var banner = $('banner'), bannerTitle = $('bannerTitle'), bannerText = $('bannerText');
+  var phaseEl = $('phase'), subEl = $('sub'), barEl = $('bar');
+  var sndBox = $('snd'), buzzBox = $('buzz'), sndNote = $('sndNote');
+  var out = { roll:$('roll'), rollSub:$('rollSub'), pitch:$('pitch'), pitchSub:$('pitchSub'),
+              period:$('period'), periodSub:$('periodSub'), peak:$('peak'), peakSub:$('peakSub'), chip:$('chip') };
+  var reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var inFrame = (function(){ try { return window.self !== window.top; } catch(e){ return true; } })();
+  var canBuzz = typeof navigator.vibrate === 'function';
+  var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!canBuzz) $('buzzRow').hidden = true;
+
+  /* ---------- theme colours for the canvases ---------- */
+  var C = {}, KEYS = ['sky','sea','swell','horizon','orb','orb-ink','fg','muted','faint','fill2','shadow'];
+  function readColors(){
+    var cs = getComputedStyle(document.documentElement);
+    KEYS.forEach(function(k){ C[k] = cs.getPropertyValue('--' + k).trim(); });
+  }
+  readColors();
+  if (window.matchMedia){
+    var mq = matchMedia('(prefers-color-scheme: dark)');
+    if (mq.addEventListener) mq.addEventListener('change', readColors); else if (mq.addListener) mq.addListener(readColors);
+  }
+  if (window.MutationObserver) new MutationObserver(readColors).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+  function font(weight, px){ return weight + ' ' + px + 'px Manrope, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif'; }
+
+  function fit(cv){
+    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 3);
+    var w = Math.round(r.width*d), h = Math.round(r.height*d);
+    if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+    return {w:r.width, h:r.height, d:d};
+  }
+  function screenAngle(){
+    if (typeof window.orientation === 'number') return window.orientation;
+    var so = window.screen && screen.orientation;
+    return so && typeof so.angle === 'number' ? so.angle : 0;
+  }
+
+  /* ---------- gyro ---------- */
+  var sensor = 'off', gotEvent = false, up = null, lastEv = 0, mode = null;
+  var STATUS = {
+    off:      {pill:'Horizon · tap Start', tone:'idle'},
+    frame:    {pill:'Horizon off', tone:'warn', title:'Live horizon is off in the Claude app',
+               text:"Claude blocks the phone's gyro, so the horizon holds still. Breathing and sound work fine. Open Sea Legs from a web link in Safari or Chrome to get it moving."},
+    waiting:  {pill:'Connecting…', tone:'wait'},
+    live:     {pill:'Horizon live', tone:'ok'},
+    flat:     {pill:'Reading ship motion', tone:'ok'},
+    blocked:  {pill:'Horizon off', tone:'warn', title:"Can't reach the gyro here",
+               text:'The horizon holds still (dashed line) until Sea Legs is opened from a web link in Safari or Chrome. Breathing and sound work either way.'},
+    denied:   {pill:'Motion access off', tone:'warn', title:'Motion access was turned down',
+               text:'Reload the page, tap Start breathing, then tap Allow when your phone asks.'},
+    none:     {pill:'No gyro', tone:'warn', title:'No gyro on this device',
+               text:"This device doesn't report motion. Breathing and sound still work."},
+    insecure: {pill:'Horizon off', tone:'warn', title:'Needs a secure link',
+               text:'The gyro only works when Sea Legs is opened from an https link.'}
+  };
+  function setStatus(){
+    var key = (sensor === 'live' && mode === 'flat') ? 'flat' : (sensor === 'off' && inFrame) ? 'frame' : sensor;
+    var s = STATUS[key];
+    // inside the app, keep one steady explanation instead of swapping text while it connects
+    var b = (inFrame && (key === 'frame' || key === 'waiting' || key === 'blocked' || key === 'denied')) ? STATUS.frame : s;
+    pill.setAttribute('data-tone', s.tone);
+    pillText.textContent = s.pill;
+    if (b.title){ bannerTitle.textContent = b.title; bannerText.textContent = b.text; banner.hidden = false; }
+    else banner.hidden = true;
+    fab.hidden = sensor !== 'live';
+  }
+  function onOri(e){
+    if (e.beta == null || e.gamma == null) return;
+    var raw = upFrom(e.beta, e.gamma), now = performance.now();
+    if (!up) up = raw;
+    else {
+      var a = 1 - Math.exp(-Math.min(0.2, (now - lastEv)/1000)/0.06);
+      for (var i = 0; i < 3; i++) up[i] += (raw[i] - up[i])*a;
+      var n = Math.sqrt(up[0]*up[0] + up[1]*up[1] + up[2]*up[2]) || 1;
+      up[0] /= n; up[1] /= n; up[2] /= n;
+    }
+    lastEv = now;
+    if (!gotEvent){ gotEvent = true; sensor = 'live'; setStatus(); }
+  }
+  function listen(){
+    window.addEventListener('deviceorientation', onOri);
+    if (!gotEvent){ sensor = 'waiting'; setStatus(); }
+    setTimeout(function(){ if (!gotEvent){ sensor = inFrame ? 'blocked' : 'none'; setStatus(); } }, 3000);
+  }
+  function startSensor(){
+    if (sensor !== 'off') return;
+    if (window.isSecureContext === false){ sensor = 'insecure'; setStatus(); return; }
+    if (typeof DeviceOrientationEvent === 'undefined'){ sensor = inFrame ? 'blocked' : 'none'; setStatus(); return; }
+    if (typeof DeviceOrientationEvent.requestPermission !== 'function'){ listen(); return; }
+    sensor = 'waiting'; setStatus();
+    var settled = false;
+    function fail(){ if (settled || gotEvent) return; settled = true; sensor = inFrame ? 'blocked' : 'denied'; setStatus(); }
+    var wd = setTimeout(fail, inFrame ? 4000 : 30000);   // never sit on "Connecting" forever
+    try {
+      DeviceOrientationEvent.requestPermission().then(function(r){
+        clearTimeout(wd);
+        if (r === 'granted'){ settled = true; listen(); } else fail();
+      }, function(){ clearTimeout(wd); fail(); });
+    } catch(err){ clearTimeout(wd); fail(); }
+  }
+
+  /* ---------- ship-motion processing ---------- */
+  var psi0 = 0, roll0 = 0, lp = 0, rollS = 0, phiShown = 0, lastTilt = null, cur = null;
+  var samples = [], lastSample = 0, armed = false, lastCross = 0, periods = [];
+  var tell = {p:0, s:0};
+  function resetRefs(t){
+    psi0 = t.psi; roll0 = t.roll; rollS = t.roll; lp = 0;
+    samples = []; periods = []; armed = false; lastCross = 0; tell.p = 0; tell.s = 0;
+  }
+  // Roll period from upward zero crossings of the roll swing, with hysteresis
+  function detect(now, x){
+    if (x < -0.4){ armed = true; }
+    else if (armed && x > 0){
+      armed = false;
+      var T = lastCross ? (now - lastCross)/1000 : 0;
+      if (lastCross && T < 2) return;                 // too quick to be the ship
+      if (T >= 2 && T <= 40){ periods.push(T); if (periods.length > 5) periods.shift(); }
+      else if (T > 40) periods = [];
+      lastCross = now;
+    }
+    if (lastCross && now - lastCross > 45000){ lastCross = 0; periods = []; }
+  }
+  function process(now, dt){
+    if (!(sensor === 'live' && up)) return null;
+    var t = tiltOf(up, screenAngle());
+    lastTilt = t;
+    var m = mode;
+    if (m === null) m = t.planar < 0.45 ? 'flat' : 'upright';
+    else if (m === 'upright' && t.planar < 0.4) m = 'flat';
+    else if (m === 'flat' && t.planar > 0.5) m = 'upright';
+    if (m !== mode){ mode = m; resetRefs(t); setStatus(); }
+    psi0 = angDiff(psi0 + angDiff(t.psi, psi0)*(1 - Math.exp(-dt/12)), 0);
+    roll0 += (t.roll - roll0)*(1 - Math.exp(-dt/30));
+    rollS += (t.roll - rollS)*(1 - Math.exp(-dt/0.15));
+    lp += ((t.roll - roll0) - lp)*(1 - Math.exp(-dt/0.4));
+    detect(now, lp);
+    if (now - lastSample >= 100){
+      lastSample = now; samples.push({t:now, a:rollS, d:lp});
+      while (samples.length && now - samples[0].t > 60000) samples.shift();
+    }
+    if (t.planar > 0.2) phiShown = t.phi;
+    cur = { roll: rollS, dpsi: angDiff(t.psi, psi0) };
+    return { phi: phiShown, dpsi: cur.dpsi, alpha: clamp((t.planar - 0.25)/0.2, 0, 1) };
+  }
+
+  /* ---------- sound: an ocean swell that builds on the in-breath and washes out on the out-breath ---------- */
+  var sound = (function(){
+    var A = null;
+    function init(){
+      try {
+        if (!A){
+          var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+          var ctx = new AC(), sr = ctx.sampleRate, len = Math.floor(sr*6);
+          var buf = ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
+          var b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+          for (var i = 0; i < len; i++){            // pink noise
+            var w = Math.random()*2 - 1;
+            b0 = 0.99886*b0 + w*0.0555179; b1 = 0.99332*b1 + w*0.0750759; b2 = 0.969*b2 + w*0.153852;
+            b3 = 0.8665*b3 + w*0.3104856; b4 = 0.55*b4 + w*0.5329522; b5 = -0.7616*b5 - w*0.016898;
+            d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w*0.5362)*0.11; b6 = w*0.115926;
+          }
+          var src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+          var filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 220; filter.Q.value = 0.6;
+          var gain = ctx.createGain(); gain.gain.value = 0.0001;
+          src.connect(filter); filter.connect(gain); gain.connect(ctx.destination); src.start();
+          A = {ctx: ctx, filter: filter, gain: gain};
+        }
+        if (A.ctx.state === 'suspended') A.ctx.resume();
+      } catch(e){ A = null; }
+    }
+    function on(){ return !!A && sndBox.checked; }
+    function hold(param, t){
+      if (param.cancelAndHoldAtTime) param.cancelAndHoldAtTime(t);
+      else { var v = param.value; param.cancelScheduledValues(t); param.setValueAtTime(v, t); }
+    }
+    function tone(freq, vol, delay){
+      var t = A.ctx.currentTime + delay, o = A.ctx.createOscillator(), g = A.ctx.createGain();
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+      o.connect(g); g.connect(A.ctx.destination); o.start(t); o.stop(t + 1.9);
+    }
+    return {
+      init: init,
+      swell: function(phase, dur){
+        if (!on()) return;
+        var t = A.ctx.currentTime, g = A.gain.gain, f = A.filter.frequency;
+        hold(g, t); hold(f, t);
+        if (phase === 'in'){ g.linearRampToValueAtTime(0.3, t + dur); f.exponentialRampToValueAtTime(1500, t + dur); }
+        else { g.linearRampToValueAtTime(0.02, t + dur); f.exponentialRampToValueAtTime(200, t + dur); }
+      },
+      chime: function(phase){ if (on()) tone(phase === 'in' ? 659.25 : 440, phase === 'in' ? 0.07 : 0.05, 0); },
+      finale: function(){ if (on()){ tone(523.25, 0.07, 0); tone(783.99, 0.06, 0.18); } },
+      stop: function(){
+        if (!A) return;
+        var t = A.ctx.currentTime, g = A.gain.gain; hold(g, t); g.linearRampToValueAtTime(0.0001, t + 0.6);
+      }
+    };
+  })();
+  function buzz(pattern){ if (canBuzz && buzzBox.checked){ try { navigator.vibrate(pattern); } catch(e){} } }
+
+  /* ---------- breathing ---------- */
+  var PACES = [{name:'Easy', i:3, e:5}, {name:'Steady', i:4, e:6}, {name:'Deep', i:5, e:7}];
+  var B = { running:false, done:false, start:0, cycle:0, breaths:0, phase:'', lastSec:-1, pace:PACES[1], target:300 };
+  var IDLE = { k:0, phase:'', left:0, prog:0, done:false }, DONE = { k:0, phase:'', left:0, prog:0, done:true };
+  function readSettings(){
+    var p = document.querySelector('input[name="pace"]:checked'), l = document.querySelector('input[name="len"]:checked');
+    B.pace = PACES[p ? +p.value : 1] || PACES[1];
+    B.target = (l ? +l.value : 5)*60;
+  }
+  function idleSub(){ return B.pace.name + ' · ' + B.pace.i + 's in, ' + B.pace.e + 's out · ' + (B.target/60) + ' min'; }
+  function setBar(p){ barEl.style.transform = 'scaleX(' + clamp(p, 0, 1) + ')'; }
+  function setButton(label, variant){ go.textContent = label; go.setAttribute('data-variant', variant); }
+  function showIdle(){ phaseEl.textContent = 'Ready to breathe'; subEl.textContent = idleSub(); setBar(0); setButton('Start breathing', 'primary'); }
+  function phaseLeft(now){
+    var t = (now - B.cycle)/1000, inh = B.pace.i, cyc = inh + B.pace.e;
+    return Math.max(0.2, t < inh ? inh - t : cyc - t);
+  }
+  function onPhase(phase, dur){
+    phaseEl.textContent = phase === 'in' ? 'Breathe in' : 'Breathe out';
+    B.lastSec = -1;
+    sound.swell(phase, dur);
+    sound.chime(phase);
+    buzz(phase === 'in' ? 60 : [25, 80, 25]);
+  }
+  function breathFrame(now){
+    if (!B.running) return B.done ? DONE : IDLE;
+    var inh = B.pace.i, cyc = inh + B.pace.e, t = (now - B.cycle)/1000;
+    if (t >= cyc){
+      var n = Math.floor(t/cyc);
+      B.breaths += n; B.cycle += n*cyc*1000; t -= n*cyc;
+      if ((now - B.start)/1000 >= B.target){ finish(now); return DONE; }
+    }
+    var phase = t < inh ? 'in' : 'out';
+    var p = phase === 'in' ? t/inh : (t - inh)/(cyc - inh);
+    if (phase !== B.phase){ B.phase = phase; onPhase(phase, phase === 'in' ? inh - t : cyc - t); }
+    var el = (now - B.start)/1000, sec = Math.floor(el);
+    setBar(el/B.target);
+    if (sec !== B.lastSec){
+      B.lastSec = sec;
+      subEl.textContent = 'Breath ' + (B.breaths + 1) + ' · ' + fmt(Math.ceil(Math.max(0, B.target - el))) + ' left';
+    }
+    return { k: phase === 'in' ? ease(p) : 1 - ease(p), phase: phase, left: Math.ceil(phase === 'in' ? inh - t : cyc - t), prog: p, done:false };
+  }
+  function startSession(){
+    readSettings();
+    var now = performance.now();
+    B.running = true; B.done = false; B.start = now; B.cycle = now; B.breaths = 0; B.phase = ''; B.lastSec = -1;
+    setButton('End session', 'secondary');
+    requestWake();
+  }
+  function stopSession(){
+    B.running = false; B.done = false; B.phase = '';
+    showIdle(); sound.stop(); releaseWake();
+  }
+  function finish(now){
+    B.running = false; B.done = true; B.phase = '';
+    phaseEl.textContent = 'Session complete';
+    subEl.textContent = B.breaths + ' breaths in ' + fmt((now - B.start)/1000);
+    setBar(1); setButton('Go again', 'primary');
+    sound.stop(); sound.finale(); buzz([40, 120, 40, 120, 40]);
+    releaseWake();
+  }
+
+  var wake = null;
+  function requestWake(){ try { if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake = w; }, function(){}); } catch(e){} }
+  function releaseWake(){ try { if (wake) wake.release(); } catch(e){} wake = null; }
+  document.addEventListener('visibilitychange', function(){ if (B.running && document.visibilityState === 'visible') requestWake(); });
+
+  /* ---------- settings ---------- */
+  function persist(){
+    try {
+      var p = document.querySelector('input[name="pace"]:checked'), l = document.querySelector('input[name="len"]:checked');
+      localStorage.setItem('sealegs.v1', JSON.stringify({ pace: p ? p.value : '1', len: l ? l.value : '5', snd: sndBox.checked, buzz: buzzBox.checked }));
+    } catch(e){}
+  }
+  function restore(){
+    try {
+      var s = JSON.parse(localStorage.getItem('sealegs.v1') || '{}');
+      if (s.pace != null && $('pace' + s.pace)) $('pace' + s.pace).checked = true;
+      if (s.len != null && $('len' + s.len)) $('len' + s.len).checked = true;
+      if (s.snd) sndBox.checked = true;
+      if (s.buzz && canBuzz) buzzBox.checked = true;
+    } catch(e){}
+  }
+  function settingsChanged(){
+    var oldPace = B.pace;
+    readSettings();
+    if (B.running){ if (B.pace !== oldPace){ B.cycle = performance.now(); B.phase = ''; } B.lastSec = -1; }
+    else { B.done = false; showIdle(); }
+    persist();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="pace"], input[name="len"]'), function(el){
+    el.addEventListener('change', settingsChanged);
+  });
+  sndBox.addEventListener('change', function(){
+    if (sndBox.checked){ sound.init(); if (B.running && B.phase) sound.swell(B.phase, phaseLeft(performance.now())); }
+    else sound.stop();
+    sndNote.hidden = !(sndBox.checked && isIOS);
+    persist();
+  });
+  buzzBox.addEventListener('change', function(){ buzz(40); persist(); });
+
+  go.addEventListener('click', function(){
+    startSensor();
+    if (sndBox.checked) sound.init();
+    if (B.running) stopSession(); else startSession();
+  });
+  fab.addEventListener('click', function(){ if (lastTilt) psi0 = lastTilt.psi; });
+
+  /* ---------- drawing ---------- */
+  function circle(ctx, x, y, r){ ctx.beginPath(); ctx.arc(x, y, r, 0, 2*Math.PI); }
+  function drawScene(st){
+    var f = fit(scene), w = f.w, h = f.h, ctx = sctx;
+    if (!w || !h) return;
+    ctx.setTransform(f.d, 0, 0, f.d, 0, 0);
+    ctx.globalAlpha = 1; ctx.setLineDash([]);
+    ctx.fillStyle = C.sky; ctx.fillRect(0, 0, w, h);
+    var top = 64, bottom = h - 24, cy = (top + bottom)/2;      // clear of the top pills and the sheet's edge
+    var lim = Math.max(30, (bottom - top)/2 - 50), gain = h/40;  // about 8 px per degree of pitch
+    var off = clamp(-st.dpsi*gain, -lim, lim)*st.alpha;
+    var phi = st.phi, px = w/2 + off*Math.sin(phi), py = cy - off*Math.cos(phi);
+    var L = Math.sqrt(w*w + h*h) + 40;
+    ctx.save();
+    ctx.translate(px, py); ctx.rotate(phi);
+    ctx.globalAlpha = st.alpha;
+    ctx.fillStyle = C.sea; ctx.fillRect(-L, 0, 2*L, 2*L);
+    ctx.strokeStyle = C.swell; ctx.lineWidth = 1;
+    var ys = [7, 16, 28, 45, 68, 100, 142];
+    for (var i = 0; i < ys.length; i++){ ctx.beginPath(); ctx.moveTo(-L, ys[i]); ctx.lineTo(L, ys[i]); ctx.stroke(); }
+    ctx.strokeStyle = C.horizon; ctx.lineWidth = 2.5;
+    if (!st.live) ctx.setLineDash([10, 8]);                    // dashed = not tracking the gyro
+    ctx.beginPath(); ctx.moveTo(-L, 0); ctx.lineTo(L, 0); ctx.stroke();
+    ctx.restore();
+
+    // the breathing light rides on the horizon
+    var br = st.br, base = clamp(Math.min(w, h)*0.08, 24, 40), r = base*(1 + (reduce ? 0.5 : 1.2)*br.k);
+    ctx.globalAlpha = 1; ctx.setLineDash([]);
+    if (br.phase){ ctx.fillStyle = C.orb; ctx.globalAlpha = 0.32*br.k; circle(ctx, px, py, r*1.5); ctx.fill(); ctx.globalAlpha = 1; }
+    ctx.shadowColor = C.shadow; ctx.shadowBlur = 22; ctx.shadowOffsetY = 6;
+    ctx.fillStyle = C.orb; circle(ctx, px, py, r); ctx.fill();
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    var ink = C['orb-ink'];
+    if (br.phase){
+      var rr = r + 10;
+      ctx.lineCap = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = C.horizon;
+      ctx.globalAlpha = 0.14; circle(ctx, px, py, rr); ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(px, py, rr, -Math.PI/2, -Math.PI/2 + Math.max(0.001, br.prog)*2*Math.PI); ctx.stroke();
+      ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = font(800, Math.round(base*0.95)); ctx.fillText(String(br.left), px, py + 1);
+    } else if (br.done){
+      ctx.strokeStyle = ink; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(px - base*0.34, py + base*0.02); ctx.lineTo(px - base*0.09, py + base*0.27); ctx.lineTo(px + base*0.36, py - base*0.24); ctx.stroke();
+    } else {
+      ctx.fillStyle = ink; circle(ctx, px, py, base*0.27); ctx.fill();
+    }
+  }
+
+  function drawClino(){
+    var f = fit(clino), w = f.w, h = f.h, ctx = cctx;
+    if (!w || !h) return;
+    ctx.setTransform(f.d, 0, 0, f.d, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    var cx = w/2, top = 10, R = Math.min(h - top - 32, w*0.6);
+    function pt(a, rad){ return [cx + rad*Math.sin(a*D2R), top + rad*Math.cos(a*D2R)]; }
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = C.fill2; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(cx, top, R, 45*D2R, 135*D2R); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = font(600, 12);
+    for (var a = -45; a <= 45; a += 5){
+      var major = a % 10 === 0, p1 = pt(a, R - 3), p2 = pt(a, R - (major ? 13 : 8));
+      ctx.strokeStyle = C.faint; ctx.globalAlpha = major ? 1 : 0.6; ctx.lineWidth = major ? 1.5 : 1;
+      ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.stroke();
+      ctx.globalAlpha = 1;
+      if (major){ var q = pt(a, R + 15); ctx.fillStyle = C.muted; ctx.fillText(String(Math.abs(a)), q[0], q[1]); }
+    }
+    ctx.font = font(700, 11); ctx.fillStyle = C.muted;
+    var ls = 'letterSpacing' in ctx;
+    if (ls) ctx.letterSpacing = '1px';
+    ctx.fillText('PORT', cx - R*0.62, top + 10);
+    ctx.fillText('STBD', cx + R*0.62, top + 10);
+    if (ls) ctx.letterSpacing = '0px';
+    var live = sensor === 'live' && cur;
+    // max-heel telltales, like the drag pointers on a bridge clinometer
+    function telltale(deg){
+      var aa = clamp(deg, -47, 47), tip = pt(aa, R + 1), b1 = pt(aa - 2.2, R + 8), b2 = pt(aa + 2.2, R + 8);
+      ctx.fillStyle = C.muted;
+      ctx.beginPath(); ctx.moveTo(tip[0], tip[1]); ctx.lineTo(b1[0], b1[1]); ctx.lineTo(b2[0], b2[1]); ctx.closePath(); ctx.fill();
+    }
+    if (live){ if (tell.p > 0.3) telltale(-tell.p); if (tell.s > 0.3) telltale(tell.s); }
+    var ang = live ? clamp(cur.roll, -47, 47) : 0, end = pt(ang, R - 18);
+    ctx.strokeStyle = live ? C.fg : C.faint; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(end[0], end[1]); ctx.stroke();
+    ctx.fillStyle = live ? C.fg : C.faint; circle(ctx, end[0], end[1], 5); ctx.fill();
+    ctx.fillStyle = C.fg; circle(ctx, cx, top, 4); ctx.fill();
+  }
+
+  /* ---------- readouts ---------- */
+  var CHIP = {none:'No reading', wait:'Reading…', calm:'Calm', moderate:'Moderate', heavy:'Heavy'};
+  function setChip(level){
+    if (out.chip.getAttribute('data-level') !== level){ out.chip.setAttribute('data-level', level); out.chip.textContent = CHIP[level]; }
+  }
+  function updateUI(){
+    if (!(sensor === 'live' && cur)) return;
+    var r = cur.roll, p = cur.dpsi;
+    out.roll.textContent = Math.abs(r).toFixed(1) + '°';
+    out.rollSub.textContent = Math.abs(r) < 0.3 ? 'level' : (r > 0 ? 'starboard' : 'port');
+    out.pitch.textContent = (p < 0 ? '−' : '+') + Math.abs(p).toFixed(1) + '°';
+    out.pitchSub.textContent = Math.abs(p) < 0.3 ? 'steady' : (p > 0 ? 'bow up' : 'bow down');
+    var maxP = 0, maxS = 0, ss = 0, swing = 0, n = samples.length, i, a, d;
+    for (i = 0; i < n; i++){
+      a = samples[i].a; d = samples[i].d;
+      if (-a > maxP) maxP = -a;
+      if (a > maxS) maxS = a;
+      if (Math.abs(d) > swing) swing = Math.abs(d);
+      ss += d*d;
+    }
+    tell.p = maxP; tell.s = maxS;
+    var enough = n >= 50, rms = n ? Math.sqrt(ss/n) : 0;
+    if (enough){
+      out.peak.textContent = Math.max(maxP, maxS).toFixed(1) + '°';
+      out.peakSub.textContent = 'P ' + maxP.toFixed(1) + '° · S ' + maxS.toFixed(1) + '°';
+    } else { out.peak.textContent = '—'; out.peakSub.textContent = 'collecting…'; }
+    if (periods.length >= 2){
+      var srt = periods.slice().sort(function(x, y){ return x - y; });
+      out.period.textContent = srt[Math.floor(srt.length/2)].toFixed(1) + ' s';
+      out.periodSub.textContent = 'median of last ' + periods.length + ' rolls';
+    } else {
+      out.period.textContent = '—';
+      out.periodSub.textContent = enough && swing < 0.6 ? 'too calm to read' : 'measuring…';
+    }
+    setChip(!enough ? 'wait' : rms < 2 ? 'calm' : rms < 4 ? 'moderate' : 'heavy');
+  }
+
+  /* ---------- loop ---------- */
+  var lastFrame = 0, lastUI = 0;
+  function frame(now){
+    var dt = lastFrame ? Math.min(0.1, (now - lastFrame)/1000) : 1/60; lastFrame = now;
+    var st = process(now, dt) || { phi: phiShown, dpsi: 0, alpha: 1 };
+    st.br = breathFrame(now);
+    st.live = sensor === 'live';
+    drawScene(st);
+    drawClino();
+    if (now - lastUI > 250){ lastUI = now; updateUI(); }
+    requestAnimationFrame(frame);
+  }
+  restore();
+  readSettings();
+  showIdle();
+  sndNote.hidden = !(sndBox.checked && isIOS);
+  setStatus();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
