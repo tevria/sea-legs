@@ -1,0 +1,1131 @@
+<title>{{APP_NAME}}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/*@fonts*/
+/* Layout: ride-app shell. On Breathe, a full-bleed horizon plays the map under a bottom panel (status, three option pickers, main button). Motion and Help are scrolling pages. A tab bar sits at the bottom; options and documents open in bottom sheets. */
+:root{
+  --bg:#ffffff; --float:#ffffff; --fill:#f2f3f5; --fill2:#e5e7ea; --line:#e8e9ec;
+  --fg:#000000; --muted:#5d6067; --faint:#a3a6ad;
+  --sky:#eef1f4; --sea:#d6dce3; --swell:#c7cfd8; --horizon:#000000;
+  --orb:#ffffff; --orb-ink:#000000; --knob:#ffffff;
+  --shadow:rgba(0,0,0,.14); --lift:rgba(0,0,0,.08);
+  --ok:#05944f; --ok-bg:#e7f4ed; --ok-ink:#03703c;
+  --warn:#e2a012; --warn-bg:#fff5df; --warn-ink:#7d5200;
+  --bad:#de2f20; --bad-bg:#ffeeec; --bad-ink:#ab1300;
+  --accent:#276ef1;
+  --font:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0a0a0b; --float:#202124; --fill:#18191b; --fill2:#2a2b2e; --line:#222326;
+  --fg:#ffffff; --muted:#a6a9af; --faint:#64676d;
+  --sky:#111316; --sea:#1f242a; --swell:#2a3038; --horizon:#ffffff;
+  --orb:#ffffff; --orb-ink:#000000; --knob:#ffffff;
+  --shadow:rgba(0,0,0,.55); --lift:rgba(0,0,0,.5);
+  --ok:#36c77b; --ok-bg:#0e2519; --ok-ink:#5fd395;
+  --warn:#f0b13c; --warn-bg:#2a200e; --warn-ink:#f3c766;
+  --bad:#ff6b5c; --bad-bg:#2f1411; --bad-ink:#ff8d7e;
+  --accent:#5b91f5;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a0a0b; --float:#202124; --fill:#18191b; --fill2:#2a2b2e; --line:#222326;
+  --fg:#ffffff; --muted:#a6a9af; --faint:#64676d;
+  --sky:#111316; --sea:#1f242a; --swell:#2a3038; --horizon:#ffffff;
+  --orb:#ffffff; --orb-ink:#000000; --knob:#ffffff;
+  --shadow:rgba(0,0,0,.55); --lift:rgba(0,0,0,.5);
+  --ok:#36c77b; --ok-bg:#0e2519; --ok-ink:#5fd395;
+  --warn:#f0b13c; --warn-bg:#2a200e; --warn-ink:#f3c766;
+  --bad:#ff6b5c; --bad-bg:#2f1411; --bad-ink:#ff8d7e;
+  --accent:#5b91f5;
+  color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.45;font-weight:500;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-tap-highlight-color:transparent;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+[hidden]{display:none!important}
+h1,h2,h3,p,ul{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:inherit;-webkit-appearance:none;appearance:none}
+svg{display:block;flex:none}
+.ico{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ico .solid{fill:currentColor;stroke:none}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px),var(--safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px),var(--safe-area-inset-right,0px))}
+.vh{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+
+/* app shell */
+.app{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg)}
+.screens{position:relative;flex:1;min-height:0}
+.screen{position:absolute;inset:0}
+.page{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.tabbar{position:relative;z-index:3;flex:none;display:grid;grid-template-columns:repeat(3,1fr);background:var(--bg);border-top:1px solid var(--line);
+  padding-bottom:max(env(safe-area-inset-bottom,0px),var(--safe-area-inset-bottom,0px));
+  padding-left:max(env(safe-area-inset-left,0px),var(--safe-area-inset-left,0px));padding-right:max(env(safe-area-inset-right,0px),var(--safe-area-inset-right,0px))}
+.tab{height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--faint);font-size:.6875rem;font-weight:700;letter-spacing:.01em;text-align:center}
+.tab svg{width:24px;height:24px}
+.tab[aria-selected="true"]{color:var(--fg)}
+
+/* breathe: the horizon plays the map */
+.breathe{background:var(--sky);overflow:hidden}
+.breathe canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.topbar{position:absolute;z-index:2;top:calc(12px + max(env(safe-area-inset-top,0px),var(--safe-area-inset-top,0px)));
+  left:max(16px,env(safe-area-inset-left,0px),var(--safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px),var(--safe-area-inset-right,0px));
+  display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:8px;min-width:0;height:40px;padding:0 16px;border-radius:999px;background:var(--float);color:var(--fg);
+  box-shadow:0 2px 12px var(--shadow);white-space:nowrap}
+.brand{flex:none;font-weight:800;font-size:1.0625rem;letter-spacing:-.02em}
+.state{font-weight:700;font-size:.875rem;padding:0 14px 0 12px}
+.state span{overflow:hidden;text-overflow:ellipsis}
+.state i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.state[data-tone="ok"] i{background:var(--ok)}
+.state[data-tone="warn"] i{background:var(--warn)}
+.state[data-tone="wait"] i{animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{50%{opacity:.2}}
+.panel{position:absolute;z-index:2;left:0;right:0;bottom:0;background:var(--bg);border-radius:24px 24px 0 0;box-shadow:0 -8px 30px var(--lift);padding-block:20px 16px}
+.panel-in{position:relative;max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.fab{position:absolute;top:-68px;right:0;width:48px;height:48px;border-radius:50%;background:var(--float);color:var(--fg);box-shadow:0 2px 12px var(--shadow);display:grid;place-items:center}
+.fab svg{width:22px;height:22px}
+.head{display:flex;flex-direction:column;gap:4px}
+.head h1{font-size:1.75rem;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.sub{color:var(--muted);font-variant-numeric:tabular-nums}
+.track{height:4px;margin-top:10px;border-radius:2px;background:var(--fill2);overflow:hidden}
+.track span{display:block;height:100%;background:var(--fg);transform:scaleX(0);transform-origin:left center}
+.hint{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border-radius:12px;background:var(--warn-bg);font-size:.875rem;font-weight:600;line-height:1.35}
+.hint svg{width:18px;height:18px}
+.hint .lead{color:var(--warn-ink)}
+.hint span{flex:1;min-width:0}
+.chev{width:14px;height:14px;color:var(--muted)}
+.picks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pick{display:flex;align-items:center;justify-content:center;gap:6px;height:48px;padding:0 8px;border-radius:12px;background:var(--fill);font-weight:700;font-size:.9375rem;min-width:0;transition:background-color .15s}
+.pick svg:first-child{width:18px;height:18px}
+.pick span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick:active{background:var(--fill2)}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;height:56px;border-radius:12px;background:var(--fg);color:var(--bg);
+  font-size:1.125rem;font-weight:700;letter-spacing:-.01em;text-align:center;transition:background-color .15s,color .15s,transform .1s}
+.btn:active{transform:scale(.985)}
+.btn[data-variant="secondary"]{background:var(--fill2);color:var(--fg)}
+.btn.small{height:48px;font-size:1rem}
+
+/* pages */
+.page-in{max-width:600px;margin:0 auto;padding-top:calc(20px + max(env(safe-area-inset-top,0px),var(--safe-area-inset-top,0px)));padding-bottom:36px;display:flex;flex-direction:column;gap:28px}
+.large{font-size:2.125rem;font-weight:800;letter-spacing:-.035em;line-height:1.1}
+.page-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+h2{font-size:1.25rem;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.block{display:flex;flex-direction:column;gap:12px}
+.lede{color:var(--muted);margin-top:-16px}
+.chip{flex:none;font-weight:700;font-size:.8125rem;line-height:1;padding:8px 12px;border-radius:999px;background:var(--fill);color:var(--muted);white-space:nowrap}
+.chip[data-level="calm"]{background:var(--ok-bg);color:var(--ok-ink)}
+.chip[data-level="moderate"]{background:var(--warn-bg);color:var(--warn-ink)}
+.chip[data-level="heavy"]{background:var(--bad-bg);color:var(--bad-ink)}
+.notice{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:16px;background:var(--warn-bg)}
+.notice .row1{display:flex;gap:12px;align-items:flex-start}
+.notice svg{width:22px;height:22px;color:var(--warn-ink)}
+.notice b{display:block;font-weight:800;font-size:.9375rem}
+.notice p{font-size:.875rem;color:var(--muted);margin-top:2px}
+.card{background:var(--fill);border-radius:20px;padding:12px 12px 4px}
+#clino{display:block;width:100%;height:190px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:0;padding:14px 16px;border-radius:16px;background:var(--fill)}
+.stat .k{font-size:.8125rem;font-weight:700;color:var(--muted)}
+.stat .v{font-size:1.75rem;font-weight:800;letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat .s{font-size:.8125rem;color:var(--muted);line-height:1.35}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fine{font-size:.875rem;color:var(--muted);line-height:1.5}
+.fine.center{text-align:center}
+.list,.menu{display:flex;flex-direction:column;list-style:none;padding:0}
+.item,.mrow,.srow{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;align-items:center;padding-block:13px}
+.item + .item::before,.mrow + .mrow::before,.srow + .srow::before{content:"";position:absolute;top:0;left:54px;right:0;height:1px;background:var(--line)}
+.mrow{grid-template-columns:40px minmax(0,1fr) auto;width:100%}
+.srow{grid-template-columns:40px minmax(0,1fr) auto;cursor:pointer}
+.ic{width:40px;height:40px;border-radius:50%;background:var(--fill);display:grid;place-items:center;color:var(--fg)}
+.ic svg{width:20px;height:20px}
+.tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tx b{font-weight:700;font-size:1rem;letter-spacing:-.005em}
+.tx small{font-size:.875rem;color:var(--muted);line-height:1.45}
+.callout{display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:16px;background:var(--fill)}
+.callout b{font-weight:800}
+.callout p{font-size:.9375rem;color:var(--muted)}
+.version{font-size:.8125rem;color:var(--faint);text-align:center}
+
+/* switch */
+.switch{position:relative;width:50px;height:30px;border-radius:999px;background:var(--fill2);transition:background-color .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--knob);box-shadow:0 1px 3px var(--shadow);transition:transform .2s,background-color .2s}
+input:checked + .switch{background:var(--fg)}
+input:checked + .switch::after{transform:translateX(20px);background:var(--bg)}
+input:focus-visible + .switch{outline:3px solid var(--accent);outline-offset:2px}
+
+/* bottom sheet */
+dialog.sheet{position:fixed;inset:auto 0 0 0;margin:0 auto;width:100%;max-width:600px;max-height:calc(100% - 24px - max(env(safe-area-inset-top,0px),var(--safe-area-inset-top,0px)));padding:0;border:0;
+  border-radius:24px 24px 0 0;background:var(--bg);color:var(--fg);box-shadow:0 -10px 40px var(--shadow);overflow:hidden;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+dialog.sheet[open]{display:flex;flex-direction:column}
+dialog.sheet.in{transform:none}
+dialog.sheet::backdrop{background:rgba(0,0,0,.45)}
+.sheet-top{flex:none;touch-action:none}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--fill2);margin:8px auto 0}
+.sheet-head{display:flex;align-items:center;gap:12px;padding-top:10px;padding-bottom:8px}
+.sheet-head h2{flex:1;min-width:0;font-size:1.375rem}
+.icon-btn{width:36px;height:36px;border-radius:50%;background:var(--fill);display:grid;place-items:center;flex:none}
+.icon-btn svg{width:18px;height:18px}
+.sheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-top:6px;padding-bottom:calc(20px + max(env(safe-area-inset-bottom,0px),var(--safe-area-inset-bottom,0px)));display:flex;flex-direction:column;gap:16px}
+.opts{display:flex;flex-direction:column;gap:4px;margin-inline:-10px}
+.opt{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:14px;align-items:center;width:100%;padding:12px;border:2px solid transparent;border-radius:16px;transition:background-color .15s,border-color .15s}
+@media (hover:hover){.opt:hover{background:var(--fill)}}
+.opt[aria-checked="true"]{border-color:var(--fg);background:transparent}
+.opt-ic{width:52px;height:44px;border-radius:12px;background:var(--fill);display:grid;place-items:center;font-weight:800;font-size:1.125rem;font-variant-numeric:tabular-nums}
+.opt-ic svg{width:32px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.opt-tx{display:flex;flex-direction:column;gap:1px;min-width:0}
+.opt-tx b{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-weight:700;font-size:1.0625rem;letter-spacing:-.01em}
+.opt small{font-size:.875rem;color:var(--muted)}
+.opt-val{display:flex;flex-direction:column;align-items:flex-end;text-align:right;font-variant-numeric:tabular-nums}
+.opt-val b{font-weight:700;font-size:1.0625rem}
+.badge{font-style:normal;font-weight:800;font-size:.6875rem;letter-spacing:.05em;text-transform:uppercase;line-height:1;padding:4px 7px;border-radius:6px;background:var(--fill2);color:var(--fg)}
+.prose{display:flex;flex-direction:column;gap:12px;-webkit-user-select:text;user-select:text}
+.prose h3{font-size:1.0625rem;font-weight:800;letter-spacing:-.01em;margin-top:8px}
+.prose p,.prose li{color:var(--muted);line-height:1.55}
+.prose ul{padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+.prose .eff{font-size:.875rem;color:var(--faint)}
+.prose pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:.8125rem;line-height:1.5;color:var(--muted);background:var(--fill);border-radius:12px;padding:12px}
+.prose a,.link{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.welcome{display:flex;flex-direction:column;gap:20px}
+.mark{width:64px;height:64px;border-radius:16px;background:var(--fg);color:var(--bg);display:grid;place-items:center}
+.mark svg{width:44px;height:44px}
+.welcome .lead{font-size:1.0625rem;color:var(--muted)}
+.safe{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:16px;background:var(--fill)}
+.safe b{font-weight:800}
+.safe p{font-size:.875rem;color:var(--muted);line-height:1.5}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app" id="app">
+  <main class="screens">
+    <section class="screen breathe" id="tab-breathe" aria-label="Breathe">
+      <canvas id="scene" role="img" aria-label="Horizon line with a breathing light sitting on it"></canvas>
+      <div class="topbar" id="topbar">
+        <span class="pill brand">{{APP_NAME}}</span>
+        <button class="pill state" id="state" type="button" data-tone="idle" aria-haspopup="dialog"><i aria-hidden="true"></i><span id="stateText">Horizon · tap Start</span></button>
+      </div>
+      <div class="panel gut" id="panel">
+        <div class="panel-in">
+          <button class="fab" id="recenter" type="button" aria-label="Re-center the horizon" hidden>
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle class="solid" cx="12" cy="12" r="2.2"/><path d="M12 1.5V5M12 19v3.5M1.5 12H5M19 12h3.5"/></svg>
+          </button>
+          <div class="head">
+            <h1 id="phase" aria-live="polite">Ready to breathe</h1>
+            <p class="sub" id="sub">Steady · 4s in, 6s out · 5 min</p>
+            <div class="track" aria-hidden="true"><span id="bar"></span></div>
+          </div>
+          <button class="hint" id="hint" type="button" aria-haspopup="dialog" hidden>
+            <svg class="ico lead" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle class="solid" cx="12" cy="7.75" r="1.1"/></svg>
+            <span id="hintText"></span>
+            <svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+          <div class="picks">
+            <button class="pick" id="pickPace" type="button" aria-haspopup="dialog">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-5 5-5 7.5 0s5 5 7.5 0 3.5-3.4 5-2"/></svg>
+              <span id="paceLabel">Steady</span>
+            </button>
+            <button class="pick" id="pickLen" type="button" aria-haspopup="dialog">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>
+              <span id="lenLabel">5 min</span>
+            </button>
+            <button class="pick" id="pickCues" type="button" aria-haspopup="dialog">
+              <svg class="ico" id="cueIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path id="cueWaves" d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a8 8 0 0 1 0 11"/><path id="cueMute" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+              <span id="cueLabel">Silent</span>
+            </button>
+          </div>
+          <button class="btn" id="go" type="button" data-variant="primary">Start breathing</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen page" id="tab-motion" aria-label="Motion" hidden>
+      <div class="page-in gut">
+        <header class="page-head"><h1 class="large">Ship motion</h1><span class="chip" id="chip" data-level="none">No reading</span></header>
+        <div class="notice" id="motionNotice" hidden>
+          <div class="row1">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle class="solid" cx="12" cy="7.75" r="1.1"/></svg>
+            <div><b id="motionTitle"></b><p id="motionText"></p></div>
+          </div>
+          <button class="btn small" id="motionStart" type="button" hidden>Turn on motion sensor</button>
+        </div>
+        <div class="card"><canvas id="clino" role="img" aria-label="Clinometer showing heel to port or starboard"></canvas></div>
+        <div class="stats">
+          <div class="stat"><span class="k">Roll</span><span class="v" id="roll">—</span><span class="s" id="rollSub">port / starboard</span></div>
+          <div class="stat"><span class="k">Pitch</span><span class="v" id="pitch">—</span><span class="s" id="pitchSub">bow up / down</span></div>
+          <div class="stat"><span class="k">Roll period</span><span class="v" id="period">—</span><span class="s" id="periodSub">one full roll and back</span></div>
+          <div class="stat"><span class="k">Peak heel</span><span class="v" id="peak">—</span><span class="s" id="peakSub">each side, last 60 s</span></div>
+        </div>
+        <div class="actions">
+          <button class="btn small" id="motionLevel" type="button" data-variant="secondary">Re-center</button>
+          <button class="btn small" id="motionHow" type="button" data-variant="secondary" data-sheet="motionhow">How to read</button>
+        </div>
+        <p class="fine">Readings come from your phone's sensors and are approximate. They're for interest only, not for navigation, stability or safety decisions.</p>
+      </div>
+    </section>
+
+    <section class="screen page" id="tab-help" aria-label="Help" hidden>
+      <div class="page-in gut">
+        <h1 class="large">Help</h1>
+        <section class="block" aria-labelledby="fixH">
+          <h2 id="fixH">Quick fixes</h2>
+          <ul class="list">
+            <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></span>
+              <span class="tx"><b>Eyes on the horizon</b><small>Get outside if you can and look at the horizon or the shoreline. It beats any screen.</small></span></li>
+            <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13.5h18l-2.6 5.5H5.6z"/><path d="M7.5 13.5v-4h9v4"/><path d="M12 9.5V5"/></svg></span>
+              <span class="tx"><b>Midships and low</b><small>Motion is usually gentlest near the middle of the ship and on lower decks.</small></span></li>
+            <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.5h10.5a2.75 2.75 0 1 0-2.75-2.75"/><path d="M3 12.5h15a3 3 0 1 1-3 3"/><path d="M3 16.5h6"/></svg></span>
+              <span class="tx"><b>Fresh air</b><small>Face into the breeze. Stay clear of exhaust and strong food smells.</small></span></li>
+            <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><circle class="solid" cx="9" cy="9" r="1"/><circle class="solid" cx="15" cy="9" r="1"/><circle class="solid" cx="9" cy="15" r="1"/><circle class="solid" cx="15" cy="15" r="1"/></svg></span>
+              <span class="tx"><b>Small, plain snacks</b><small>Crackers or dry toast. Some people feel worse on an empty stomach.</small></span></li>
+            <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z"/><path d="M16.5 10.5h1.25a2.5 2.5 0 0 1 0 5H16.5"/><path d="M9 3.5V6M12.5 3.5V6"/></svg></span>
+              <span class="tx"><b>Ginger</b><small>Some people find ginger tea or chews settle their stomach.</small></span></li>
+            <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle class="solid" cx="12" cy="12" r="2.5"/></svg></span>
+              <span class="tx"><b>Wrist pressure point</b><small>Some people find firm pressure helps: three finger widths below the wrist crease, between the two tendons.</small></span></li>
+            <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/></svg></span>
+              <span class="tx"><b>Sip water</b><small>Small sips, often. Go easy on alcohol and heavy meals.</small></span></li>
+            <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A7.6 7.6 0 1 1 9.4 4.5a6 6 0 0 0 10.1 10.1z"/></svg></span>
+              <span class="tx"><b>Lie down, eyes closed</b><small>If it gets bad, lying still with your eyes closed can help.</small></span></li>
+          </ul>
+        </section>
+        <div class="callout">
+          <b>Medication</b>
+          <p>There are over-the-counter and prescription options. Most work best taken before you sail, and some cause drowsiness. Ask a pharmacist or doctor which is right for you.</p>
+        </div>
+        <div class="callout">
+          <b>When to get help</b>
+          <p>See the ship's medical centre or a doctor if you're vomiting repeatedly, can't keep fluids down, feel faint or confused, have chest pain or trouble breathing, or if symptoms carry on after you're back on land.</p>
+        </div>
+        <section class="block" aria-labelledby="aboutH">
+          <h2 id="aboutH">About</h2>
+          <div class="menu">
+            <button class="mrow" type="button" data-sheet="how"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 13h6M16 13h6"/><circle cx="12" cy="13" r="4"/></svg></span><span class="tx"><b>How it works</b></span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+            <button class="mrow" type="button" data-sheet="safety"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6z"/></svg></span><span class="tx"><b>Safety</b></span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+            <button class="mrow" type="button" data-sheet="privacy"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span class="tx"><b>Privacy policy</b></span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+            <button class="mrow" type="button" data-sheet="terms"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M10 12.5h5M10 16h5"/></svg></span><span class="tx"><b>Terms of use</b></span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+            <button class="mrow" type="button" data-sheet="licenses"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span><span class="tx"><b>Licenses</b></span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+          </div>
+        </section>
+        <p class="version">{{APP_NAME}} {{VERSION}}</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" role="tablist" aria-label="Sections">
+    <button class="tab" type="button" role="tab" id="tabbtn-breathe" data-tab="breathe" aria-controls="tab-breathe" aria-selected="true">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 13h6.5M16 13h6.5"/><circle cx="12" cy="13" r="4"/></svg>Breathe</button>
+    <button class="tab" type="button" role="tab" id="tabbtn-motion" data-tab="motion" aria-controls="tab-motion" aria-selected="false" tabindex="-1">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 9a9.5 9.5 0 0 0 17 0"/><path d="M12 3.5v10"/><circle class="solid" cx="12" cy="15" r="1.9"/></svg>Motion</button>
+    <button class="tab" type="button" role="tab" id="tabbtn-help" data-tab="help" aria-controls="tab-help" aria-selected="false" tabindex="-1">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/></svg>Help</button>
+  </nav>
+</div>
+
+<dialog class="sheet" id="sheet" aria-labelledby="sheetTitle">
+  <div class="sheet-top" id="sheetTop">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-head gut">
+      <button class="icon-btn" id="sheetBack" type="button" aria-label="Back" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <h2 id="sheetTitle"></h2>
+      <button class="icon-btn" id="sheetClose" type="button" aria-label="Close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+</dialog>
+
+<template id="t-how">
+  <p>Slow, steady breathing and a clear view of the horizon are two of the simplest things to try at sea. {{APP_NAME}} puts both on one screen.</p>
+  <h3>Breathe with the light</h3>
+  <p>Breathe in through your nose as the light grows and out slowly as it settles. The number counts down each half of the breath, and the bar under the title tracks the session.</p>
+  <h3>Watch the horizon</h3>
+  <p>The line on screen follows your phone's motion sensors, so it stays level with the real horizon while the boat rolls and pitches. If it drifts, tap the level button to re-center it.</p>
+  <h3>Put the phone down</h3>
+  <p>Turn on Sound and you can stop looking at the screen: breathe in as the swell builds and out as it washes back, with your eyes on the real horizon.</p>
+</template>
+
+<template id="t-motionhow">
+  <p>For steady readings, lay the phone flat with the top pointing at the bow, or brace it upright facing forward. Held in your hand, your own movement mixes in.</p>
+  <h3>Roll</h3><p>How far the ship is leaning to port or starboard right now.</p>
+  <h3>Pitch</h3><p>Bow up or bow down, measured from where the phone was when it started or was last re-centered.</p>
+  <h3>Roll period</h3><p>How long one full roll takes, side to side and back, averaged over the last few rolls.</p>
+  <h3>Peak heel</h3><p>The furthest lean each side over the last minute. The small markers on the dial show it.</p>
+  <p>All readings are approximate and for interest only. Don't use them for navigation, stability or safety decisions.</p>
+</template>
+
+<template id="t-safety">
+  <p>{{APP_NAME}} is a general wellness tool. It is not a medical device, and nothing in it is medical advice.</p>
+  <ul>
+    <li>Talk to a doctor or pharmacist about motion sickness, and before making any decision about medication or your health.</li>
+    <li>If slow breathing makes you dizzy, light-headed or uncomfortable, stop and breathe normally.</li>
+    <li>Stay aware of your surroundings and keep a hand free to hold on when the deck is moving.</li>
+    <li>Don't use {{APP_NAME}} while you're on watch or lookout, driving, operating machinery, or doing anything that needs your full attention.</li>
+    <li>Follow crew instructions and safety signs at all times.</li>
+  </ul>
+  <h3>When to get help</h3>
+  <p>See the ship's medical centre or a doctor if you're vomiting repeatedly, can't keep fluids down, feel faint or confused, have chest pain or trouble breathing, or if symptoms carry on after you're back on land.</p>
+</template>
+
+<template id="t-privacy"><!--@privacy--></template>
+<template id="t-terms"><!--@terms--></template>
+<template id="t-licenses"><!--@licenses--></template>
+
+<template id="t-welcome">
+  <div class="welcome">
+    <div class="mark" aria-hidden="true"><svg viewBox="0 0 44 44"><path d="M0 24h44" stroke="currentColor" stroke-width="3"/><circle cx="22" cy="24" r="8.5" fill="currentColor"/><circle cx="22" cy="24" r="3" class="dot"/></svg></div>
+    <p class="lead">{{APP_NAME}} helps you feel steadier at sea with slow breathing and a steady horizon.</p>
+    <ul class="list">
+      <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-5 5-5 7.5 0s5 5 7.5 0 3.5-3.4 5-2"/></svg></span>
+        <span class="tx"><b>Breathe with the light</b><small>In as it grows, out as it settles.</small></span></li>
+      <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></span>
+        <span class="tx"><b>Keep your eyes on the horizon</b><small>The real one is best. The line on screen follows the boat.</small></span></li>
+      <li class="item"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a8 8 0 0 1 0 11"/></svg></span>
+        <span class="tx"><b>Put the phone down</b><small>Turn on Sound and follow the swell instead of the screen.</small></span></li>
+    </ul>
+    <div class="safe">
+      <b>Safety first</b>
+      <p>{{APP_NAME}} is a wellness tool, not a medical device or medical advice. Talk to a doctor or pharmacist about motion sickness. Stay aware of your surroundings, and don't use it while you're on watch, driving or operating anything. If slow breathing makes you dizzy, stop.</p>
+    </div>
+    <button class="btn" type="button" id="welcomeOk" data-autofocus>I understand</button>
+    <p class="fine center">By continuing you agree to the <button type="button" class="link" data-open="terms">Terms of use</button>. See the <button type="button" class="link" data-open="privacy">Privacy policy</button>.</p>
+  </div>
+</template>
+
+<script>
+(function(){
+  'use strict';
+  var D2R = Math.PI/180, R2D = 180/Math.PI;
+  function $(id){ return document.getElementById(id); }
+  var APP = '{{APP_NAME}}', SITE = '{{SITE_URL}}';
+
+  /* ---------- motion math (pure) ---------- */
+  // Earth "up" in the phone's own axes (W3C: x right, y toward top, z out of the screen)
+  function upFrom(beta, gamma){
+    var b = beta*D2R, g = gamma*D2R;
+    return [-Math.cos(b)*Math.sin(g), Math.sin(b), Math.cos(b)*Math.cos(g)];
+  }
+  // Tilt in the screen's frame, so landscape works too
+  function tiltOf(u, screenDeg){
+    var t = screenDeg*D2R, c = Math.cos(t), s = Math.sin(t);
+    var sx = u[0]*c - u[1]*s, sy = u[0]*s + u[1]*c, sz = u[2];
+    return {
+      phi: Math.atan2(sx, sy),                              // horizon rotation on screen, radians, clockwise +
+      roll: Math.asin(Math.max(-1, Math.min(1, -sx)))*R2D,  // heel in degrees, + = right side (starboard) down
+      psi: Math.atan2(sy, sz)*R2D,                          // rotation about the screen's left-right axis, + = bow up
+      planar: Math.sqrt(sx*sx + sy*sy)                      // 0 = lying flat, 1 = upright
+    };
+  }
+  function angDiff(a, b){ return ((a - b + 540) % 360) - 180; }
+  function ease(p){ return 0.5 - 0.5*Math.cos(Math.PI*p); }
+  function clamp(v, lo, hi){ return v < lo ? lo : v > hi ? hi : v; }
+  function fmt(sec){ sec = Math.max(0, Math.floor(sec)); var m = Math.floor(sec/60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
+  function el(tag, cls){ var e = document.createElement(tag); if (cls) e.className = cls; return e; }
+  function quiet(p){ if (p && typeof p.catch === 'function') p.catch(function(){}); }
+
+  /* ---------- platform ---------- */
+  var Cap = window.Capacitor;
+  var isNative = !!(Cap && typeof Cap.isNativePlatform === 'function' && Cap.isNativePlatform());
+  var platform = isNative && typeof Cap.getPlatform === 'function' ? Cap.getPlatform() : 'web';
+  function plugin(name){
+    if (!isNative) return null;
+    try {
+      if (typeof Cap.isPluginAvailable === 'function' && !Cap.isPluginAvailable(name)) return null;
+      return (Cap.Plugins && Cap.Plugins[name]) || (typeof Cap.registerPlugin === 'function' ? Cap.registerPlugin(name) : null);
+    } catch(e){ return null; }
+  }
+  var Haptics = plugin('Haptics'), KeepAwake = plugin('KeepAwake'), AppPlugin = plugin('App');
+  var inFrame = !isNative && (function(){ try { return window.self !== window.top; } catch(e){ return true; } })();
+  var canVibrate = !isNative && typeof navigator.vibrate === 'function';
+  var canFeel = !!Haptics || canVibrate;
+  var isIOS = platform === 'ios' || /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  /* ---------- elements ---------- */
+  var scene = $('scene'), sctx = scene.getContext('2d');
+  var clino = $('clino'), cctx = clino.getContext('2d');
+  var panel = $('panel'), topbar = $('topbar');
+  var go = $('go'), fab = $('recenter');
+  var pill = $('state'), pillText = $('stateText'), hint = $('hint'), hintText = $('hintText');
+  var phaseEl = $('phase'), subEl = $('sub'), barEl = $('bar');
+  var out = { roll:$('roll'), rollSub:$('rollSub'), pitch:$('pitch'), pitchSub:$('pitchSub'),
+              period:$('period'), periodSub:$('periodSub'), peak:$('peak'), peakSub:$('peakSub'), chip:$('chip') };
+
+  /* ---------- settings ---------- */
+  var PACES = [
+    {name:'Easy',   i:3, e:5, bpm:'7.5', wave:'M2 12Q5.5 8 9 12T16 12T23 12T30 12'},
+    {name:'Steady', i:4, e:6, bpm:'6',   wave:'M2 12Q6.67 5 11.33 12T20.67 12T30 12'},
+    {name:'Deep',   i:5, e:7, bpm:'5',   wave:'M2 12Q9 0 16 12T30 12'}
+  ];
+  var LENGTHS = [{m:3, d:'A quick reset'}, {m:5, d:'A full session'}, {m:10, d:'For a long crossing'}];
+  var S = { pace:1, len:5, sound:false, haptics:!!Haptics };
+  function load(){
+    try {
+      var s = JSON.parse(localStorage.getItem('sealegs.v1') || '{}');
+      if (s.pace != null && PACES[+s.pace]) S.pace = +s.pace;
+      if (LENGTHS.some(function(l){ return l.m === +s.len; })) S.len = +s.len;
+      if (typeof s.snd === 'boolean') S.sound = s.snd;
+      if (typeof s.buzz === 'boolean') S.haptics = s.buzz;
+    } catch(e){}
+  }
+  function save(){
+    try { localStorage.setItem('sealegs.v1', JSON.stringify({ pace:String(S.pace), len:String(S.len), snd:S.sound, buzz:S.haptics })); } catch(e){}
+  }
+  function updatePicks(){
+    $('paceLabel').textContent = PACES[S.pace].name;
+    $('lenLabel').textContent = S.len + ' min';
+    $('cueLabel').textContent = S.sound ? 'Sound' : 'Silent';
+    $('cueWaves').style.display = S.sound ? '' : 'none';
+    $('cueMute').style.display = S.sound ? 'none' : '';
+    $('pickPace').setAttribute('aria-label', 'Pace: ' + PACES[S.pace].name);
+    $('pickLen').setAttribute('aria-label', 'Length: ' + S.len + ' minutes');
+    $('pickCues').setAttribute('aria-label', 'Cues: ' + (S.sound ? 'sound on' : 'sound off'));
+  }
+
+  /* ---------- theme colours for the canvases ---------- */
+  var C = {}, KEYS = ['sky','sea','swell','horizon','orb','orb-ink','fg','muted','faint','fill2','shadow'];
+  var darkQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+  function readColors(){
+    var cs = getComputedStyle(document.documentElement);
+    KEYS.forEach(function(k){ C[k] = cs.getPropertyValue('--' + k).trim(); });
+  }
+  readColors();
+  if (darkQ){ if (darkQ.addEventListener) darkQ.addEventListener('change', readColors); else if (darkQ.addListener) darkQ.addListener(readColors); }
+  if (window.MutationObserver) new MutationObserver(readColors).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+  function font(weight, px){ return weight + ' ' + px + 'px Manrope, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif'; }
+  function fit(cv){
+    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 3);
+    var w = Math.round(r.width*d), h = Math.round(r.height*d);
+    if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+    return {w:r.width, h:r.height, d:d, top:r.top};
+  }
+  function screenAngle(){
+    if (typeof window.orientation === 'number') return window.orientation;
+    var so = window.screen && screen.orientation;
+    return so && typeof so.angle === 'number' ? so.angle : 0;
+  }
+
+  /* ---------- motion sensor ---------- */
+  var sensor = 'off', gotEvent = false, up = null, lastEv = 0, mode = null;
+  var STATUS = {
+    off:      {pill:'Horizon · tap Start', tone:'idle', title:'Live horizon',
+               text:'Tap Start breathing to turn on the motion sensor. If your phone asks for motion access, tap Allow.'},
+    frame:    {pill:'Horizon off', tone:'warn', hint:'Here the horizon holds still. It moves in the app.', title:'Live horizon is off here',
+               text:"The Claude app blocks your phone's motion sensor, so the horizon holds still (dashed line). Breathing and sound work fine. In the " + APP + " app, or at " + SITE + " in Safari or Chrome, the horizon moves with the boat."},
+    waiting:  {pill:'Connecting…', tone:'wait', title:'Connecting', text:'Waiting for the motion sensor.'},
+    live:     {pill:'Horizon live', tone:'ok', title:'Horizon live',
+               text:"Your phone's motion sensors keep the line level with the real horizon. If it drifts, tap the level button to re-center it."},
+    flat:     {pill:'Reading motion', tone:'ok', title:'Reading ship motion',
+               text:'The phone is lying flat, so it is measuring the ship instead of drawing the horizon. Pick it up to see the horizon again.'},
+    blocked:  {pill:'Horizon off', tone:'warn', hint:"This browser isn't sharing the motion sensor.", title:"Can't reach the motion sensor",
+               text:"The horizon holds still (dashed line) because this browser isn't sharing the motion sensor. Open " + SITE + " in Safari or Chrome, or use the app. Breathing and sound work either way."},
+    denied:   {pill:'Motion access off', tone:'warn', hint:'Motion access was turned down.', title:'Motion access is off',
+               text: isNative ? 'Check that motion access is allowed for ' + APP + ' in your phone’s settings, then reopen the app.'
+                              : 'Reload the page, tap Start breathing, then tap Allow when your phone asks.'},
+    none:     {pill:'No motion sensor', tone:'warn', hint:'No motion sensor on this device.', title:'No motion sensor',
+               text:"This device doesn't report motion, so the horizon holds still. Breathing and sound work as normal."},
+    insecure: {pill:'Horizon off', tone:'warn', hint:'Motion needs a secure (https) link.', title:'Needs a secure link',
+               text:'Motion sensors only work when this page is opened from an https link.'}
+  };
+  function statusKey(){
+    if (sensor === 'live') return mode === 'flat' ? 'flat' : 'live';
+    if (inFrame && (sensor === 'off' || sensor === 'waiting' || sensor === 'blocked' || sensor === 'denied')) return sensor === 'waiting' ? 'waiting' : 'frame';
+    return sensor;
+  }
+  function setStatus(){
+    var key = statusKey(), s = STATUS[key];
+    var noteKey = (inFrame && key === 'waiting') ? 'frame' : key, n = STATUS[noteKey];
+    pill.setAttribute('data-tone', s.tone);
+    pillText.textContent = s.pill;
+    if (n.hint){ hintText.textContent = n.hint; hint.hidden = false; } else hint.hidden = true;
+    fab.hidden = sensor !== 'live';
+    var showNotice = !(key === 'live' || key === 'flat' || key === 'waiting');
+    $('motionNotice').hidden = !showNotice;
+    $('motionTitle').textContent = n.title;
+    $('motionText').textContent = n.text;
+    $('motionStart').hidden = sensor !== 'off' || inFrame;
+    $('motionLevel').disabled = sensor !== 'live';
+    if (sheetState.name === 'status') renderSheet('status');
+  }
+  function onOri(e){
+    if (e.beta == null || e.gamma == null) return;
+    var raw = upFrom(e.beta, e.gamma), now = performance.now();
+    if (!up) up = raw;
+    else {
+      var a = 1 - Math.exp(-Math.min(0.2, (now - lastEv)/1000)/0.06);
+      for (var i = 0; i < 3; i++) up[i] += (raw[i] - up[i])*a;
+      var n = Math.sqrt(up[0]*up[0] + up[1]*up[1] + up[2]*up[2]) || 1;
+      up[0] /= n; up[1] /= n; up[2] /= n;
+    }
+    lastEv = now;
+    if (!gotEvent){ gotEvent = true; sensor = 'live'; setStatus(); }
+  }
+  function listen(){
+    window.addEventListener('deviceorientation', onOri);
+    if (!gotEvent){ sensor = 'waiting'; setStatus(); }
+    setTimeout(function(){ if (!gotEvent){ sensor = inFrame ? 'blocked' : 'none'; setStatus(); } }, 3000);
+  }
+  function startSensor(){
+    if (sensor !== 'off') return;
+    if (window.isSecureContext === false){ sensor = 'insecure'; setStatus(); return; }
+    if (typeof DeviceOrientationEvent === 'undefined'){ sensor = inFrame ? 'blocked' : 'none'; setStatus(); return; }
+    if (typeof DeviceOrientationEvent.requestPermission !== 'function'){ listen(); return; }
+    sensor = 'waiting'; setStatus();
+    var settled = false;
+    function fail(){ if (settled || gotEvent) return; settled = true; sensor = inFrame ? 'blocked' : 'denied'; setStatus(); }
+    var wd = setTimeout(fail, inFrame ? 4000 : 30000);   // never sit on "Connecting" forever
+    try {
+      DeviceOrientationEvent.requestPermission().then(function(r){
+        clearTimeout(wd);
+        if (r === 'granted'){ settled = true; listen(); } else fail();
+      }, function(){ clearTimeout(wd); fail(); });
+    } catch(err){ clearTimeout(wd); fail(); }
+  }
+
+  /* ---------- ship-motion processing ---------- */
+  var psi0 = 0, roll0 = 0, lp = 0, rollS = 0, phiShown = 0, lastTilt = null, cur = null;
+  var samples = [], lastSample = 0, armed = false, lastCross = 0, periods = [];
+  var tell = {p:0, s:0};
+  function resetRefs(t){
+    psi0 = t.psi; roll0 = t.roll; rollS = t.roll; lp = 0;
+    samples = []; periods = []; armed = false; lastCross = 0; tell.p = 0; tell.s = 0;
+  }
+  // Roll period from upward zero crossings of the roll swing, with hysteresis
+  function detect(now, x){
+    if (x < -0.4){ armed = true; }
+    else if (armed && x > 0){
+      armed = false;
+      var T = lastCross ? (now - lastCross)/1000 : 0;
+      if (lastCross && T < 2) return;                 // too quick to be the ship
+      if (T >= 2 && T <= 40){ periods.push(T); if (periods.length > 5) periods.shift(); }
+      else if (T > 40) periods = [];
+      lastCross = now;
+    }
+    if (lastCross && now - lastCross > 45000){ lastCross = 0; periods = []; }
+  }
+  function process(now, dt){
+    if (!(sensor === 'live' && up)) return null;
+    var t = tiltOf(up, screenAngle());
+    lastTilt = t;
+    var m = mode;
+    if (m === null) m = t.planar < 0.45 ? 'flat' : 'upright';
+    else if (m === 'upright' && t.planar < 0.4) m = 'flat';
+    else if (m === 'flat' && t.planar > 0.5) m = 'upright';
+    if (m !== mode){ mode = m; resetRefs(t); setStatus(); }
+    psi0 = angDiff(psi0 + angDiff(t.psi, psi0)*(1 - Math.exp(-dt/12)), 0);
+    roll0 += (t.roll - roll0)*(1 - Math.exp(-dt/30));
+    rollS += (t.roll - rollS)*(1 - Math.exp(-dt/0.15));
+    lp += ((t.roll - roll0) - lp)*(1 - Math.exp(-dt/0.4));
+    detect(now, lp);
+    if (now - lastSample >= 100){
+      lastSample = now; samples.push({t:now, a:rollS, d:lp});
+      while (samples.length && now - samples[0].t > 60000) samples.shift();
+    }
+    if (t.planar > 0.2) phiShown = t.phi;
+    cur = { roll: rollS, dpsi: angDiff(t.psi, psi0) };
+    return { phi: phiShown, dpsi: cur.dpsi, alpha: clamp((t.planar - 0.25)/0.2, 0, 1) };
+  }
+  function recenter(){ if (lastTilt) psi0 = lastTilt.psi; }
+
+  /* ---------- sound: an ocean swell that builds on the in-breath and washes out on the out-breath ---------- */
+  var sound = (function(){
+    var A = null;
+    function init(){
+      try {
+        if (!A){
+          var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+          var ctx = new AC(), sr = ctx.sampleRate, len = Math.floor(sr*6);
+          var buf = ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
+          var b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+          for (var i = 0; i < len; i++){            // pink noise
+            var w = Math.random()*2 - 1;
+            b0 = 0.99886*b0 + w*0.0555179; b1 = 0.99332*b1 + w*0.0750759; b2 = 0.969*b2 + w*0.153852;
+            b3 = 0.8665*b3 + w*0.3104856; b4 = 0.55*b4 + w*0.5329522; b5 = -0.7616*b5 - w*0.016898;
+            d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w*0.5362)*0.11; b6 = w*0.115926;
+          }
+          var src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+          var filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 220; filter.Q.value = 0.6;
+          var gain = ctx.createGain(); gain.gain.value = 0.0001;
+          src.connect(filter); filter.connect(gain); gain.connect(ctx.destination); src.start();
+          A = {ctx: ctx, filter: filter, gain: gain};
+        }
+        if (A.ctx.state === 'suspended') quiet(A.ctx.resume());
+      } catch(e){ A = null; }
+    }
+    function on(){ return !!A && S.sound; }
+    function hold(param, t){
+      if (param.cancelAndHoldAtTime) param.cancelAndHoldAtTime(t);
+      else { var v = param.value; param.cancelScheduledValues(t); param.setValueAtTime(v, t); }
+    }
+    function tone(freq, vol, delay){
+      var t = A.ctx.currentTime + delay, o = A.ctx.createOscillator(), g = A.ctx.createGain();
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+      o.connect(g); g.connect(A.ctx.destination); o.start(t); o.stop(t + 1.9);
+    }
+    return {
+      init: init,
+      swell: function(phase, dur){
+        if (!on()) return;
+        var t = A.ctx.currentTime, g = A.gain.gain, f = A.filter.frequency;
+        hold(g, t); hold(f, t);
+        if (phase === 'in'){ g.linearRampToValueAtTime(0.3, t + dur); f.exponentialRampToValueAtTime(1500, t + dur); }
+        else { g.linearRampToValueAtTime(0.02, t + dur); f.exponentialRampToValueAtTime(200, t + dur); }
+      },
+      chime: function(phase){ if (on()) tone(phase === 'in' ? 659.25 : 440, phase === 'in' ? 0.07 : 0.05, 0); },
+      finale: function(){ if (on()){ tone(523.25, 0.07, 0); tone(783.99, 0.06, 0.18); } },
+      stop: function(){
+        if (!A) return;
+        var t = A.ctx.currentTime, g = A.gain.gain; hold(g, t); g.linearRampToValueAtTime(0.0001, t + 0.6);
+      }
+    };
+  })();
+  function feel(kind){
+    if (!S.haptics) return;
+    if (Haptics){
+      try { quiet(kind === 'done' ? Haptics.notification({type:'SUCCESS'}) : Haptics.impact({style: kind === 'in' ? 'LIGHT' : 'MEDIUM'})); } catch(e){}
+      return;
+    }
+    if (canVibrate){ try { navigator.vibrate(kind === 'in' ? 40 : kind === 'out' ? [20, 70, 20] : [40, 100, 40, 100, 40]); } catch(e){} }
+  }
+
+  /* ---------- keep the screen on while breathing ---------- */
+  var wake = null;
+  function awake(on){
+    if (KeepAwake){ try { quiet(on ? KeepAwake.keepAwake() : KeepAwake.allowSleep()); } catch(e){} return; }
+    if (on){ try { if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake = w; }, function(){}); } catch(e){} }
+    else { try { if (wake) quiet(wake.release()); } catch(e){} wake = null; }
+  }
+  document.addEventListener('visibilitychange', function(){ if (B.running && document.visibilityState === 'visible' && !KeepAwake) awake(true); });
+
+  /* ---------- breathing ---------- */
+  var B = { running:false, done:false, start:0, cycle:0, breaths:0, phase:'', lastSec:-1, pace:PACES[1], target:300 };
+  var IDLE = { k:0, phase:'', left:0, prog:0, done:false }, DONE = { k:0, phase:'', left:0, prog:0, done:true };
+  function idleSub(){ var p = PACES[S.pace]; return p.name + ' · ' + p.i + 's in, ' + p.e + 's out · ' + S.len + ' min'; }
+  function setBar(p){ barEl.style.transform = 'scaleX(' + clamp(p, 0, 1) + ')'; }
+  function setButton(label, variant){ go.textContent = label; go.setAttribute('data-variant', variant); }
+  function showIdle(){ phaseEl.textContent = 'Ready to breathe'; subEl.textContent = idleSub(); setBar(0); setButton('Start breathing', 'primary'); }
+  function phaseLeft(now){
+    var t = (now - B.cycle)/1000, inh = B.pace.i, cyc = inh + B.pace.e;
+    return Math.max(0.2, t < inh ? inh - t : cyc - t);
+  }
+  function onPhase(phase, dur){
+    phaseEl.textContent = phase === 'in' ? 'Breathe in' : 'Breathe out';
+    B.lastSec = -1;
+    sound.swell(phase, dur);
+    sound.chime(phase);
+    feel(phase);
+  }
+  function breathFrame(now){
+    if (!B.running) return B.done ? DONE : IDLE;
+    var inh = B.pace.i, cyc = inh + B.pace.e, t = (now - B.cycle)/1000;
+    if (t >= cyc){
+      var n = Math.floor(t/cyc);
+      B.breaths += n; B.cycle += n*cyc*1000; t -= n*cyc;
+      if ((now - B.start)/1000 >= B.target){ finish(now); return DONE; }
+    }
+    var phase = t < inh ? 'in' : 'out';
+    var p = phase === 'in' ? t/inh : (t - inh)/(cyc - inh);
+    if (phase !== B.phase){ B.phase = phase; onPhase(phase, phase === 'in' ? inh - t : cyc - t); }
+    var el2 = (now - B.start)/1000, sec = Math.floor(el2);
+    setBar(el2/B.target);
+    if (sec !== B.lastSec){
+      B.lastSec = sec;
+      subEl.textContent = 'Breath ' + (B.breaths + 1) + ' · ' + fmt(Math.ceil(Math.max(0, B.target - el2))) + ' left';
+    }
+    return { k: phase === 'in' ? ease(p) : 1 - ease(p), phase: phase, left: Math.ceil(phase === 'in' ? inh - t : cyc - t), prog: p, done:false };
+  }
+  function startSession(){
+    var now = performance.now();
+    B.pace = PACES[S.pace]; B.target = S.len*60;
+    B.running = true; B.done = false; B.start = now; B.cycle = now; B.breaths = 0; B.phase = ''; B.lastSec = -1;
+    setButton('End session', 'secondary');
+    awake(true);
+  }
+  function stopSession(){
+    B.running = false; B.done = false; B.phase = '';
+    showIdle(); sound.stop(); awake(false);
+  }
+  function finish(now){
+    B.running = false; B.done = true; B.phase = '';
+    phaseEl.textContent = 'Session complete';
+    subEl.textContent = B.breaths + ' breaths in ' + fmt((now - B.start)/1000);
+    setBar(1); setButton('Go again', 'primary');
+    sound.stop(); sound.finale(); feel('done');
+    awake(false);
+  }
+  function settingsChanged(paceChanged){
+    if (B.running){
+      if (paceChanged){ B.pace = PACES[S.pace]; B.cycle = performance.now(); B.phase = ''; }
+      B.target = S.len*60; B.lastSec = -1;
+    } else { B.done = false; showIdle(); }
+    updatePicks(); save();
+  }
+  go.addEventListener('click', function(){
+    startSensor();
+    if (S.sound) sound.init();
+    if (B.running) stopSession(); else startSession();
+  });
+  fab.addEventListener('click', recenter);
+  $('motionLevel').addEventListener('click', recenter);
+  $('motionStart').addEventListener('click', startSensor);
+
+  /* ---------- tabs ---------- */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var current = 'breathe';
+  function showTab(name, focus){
+    tabs.forEach(function(t){
+      var on = t.getAttribute('data-tab') === name;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      $('tab-' + t.getAttribute('data-tab')).hidden = !on;
+      if (on && focus) t.focus();
+    });
+    current = name;
+  }
+  tabs.forEach(function(t, i){
+    t.addEventListener('click', function(){ showTab(t.getAttribute('data-tab')); });
+    t.addEventListener('keydown', function(e){
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      var j = (i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
+      showTab(tabs[j].getAttribute('data-tab'), true);
+    });
+  });
+
+  /* ---------- bottom sheets ---------- */
+  var sheet = $('sheet'), sheetTitle = $('sheetTitle'), sheetBody = $('sheetBody'), sheetClose = $('sheetClose'), sheetBack = $('sheetBack');
+  var sheetState = { name:null, locked:false, back:null, opener:null };
+  function tpl(id){
+    return function(body){
+      var wrap = el('div', 'prose gut');
+      wrap.appendChild($(id).content.cloneNode(true));
+      body.appendChild(wrap);
+    };
+  }
+  function noteP(text){ var p = el('p', 'fine gut'); p.textContent = text; return p; }
+  function renderPace(body){
+    var g = el('div', 'opts gut'); g.setAttribute('role', 'radiogroup'); g.setAttribute('aria-label', 'Pace');
+    PACES.forEach(function(p, i){
+      var b = el('button', 'opt'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(S.pace === i));
+      if (S.pace === i) b.setAttribute('data-autofocus', '');
+      b.innerHTML = '<span class="opt-ic"><svg viewBox="0 0 32 24" aria-hidden="true"><path d="' + p.wave + '"/></svg></span>' +
+        '<span class="opt-tx"><b>' + p.name + (i === 1 ? ' <em class="badge">Start here</em>' : '') + '</b><small>' + p.bpm + ' breaths a minute</small></span>' +
+        '<span class="opt-val"><b>' + p.i + 's in</b><small>' + p.e + 's out</small></span>';
+      b.addEventListener('click', function(){ var changed = S.pace !== i; S.pace = i; settingsChanged(changed); closeSheet(); });
+      g.appendChild(b);
+    });
+    body.appendChild(g);
+    body.appendChild(noteP('In through the nose as the light grows, slowly out as it settles. Pick whatever feels comfortable.'));
+  }
+  function renderLen(body){
+    var g = el('div', 'opts gut'); g.setAttribute('role', 'radiogroup'); g.setAttribute('aria-label', 'Session length');
+    LENGTHS.forEach(function(l){
+      var b = el('button', 'opt'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(S.len === l.m));
+      if (S.len === l.m) b.setAttribute('data-autofocus', '');
+      b.innerHTML = '<span class="opt-ic">' + l.m + '</span><span class="opt-tx"><b>' + l.m + ' minutes</b><small>' + l.d + '</small></span><span></span>';
+      b.addEventListener('click', function(){ S.len = l.m; settingsChanged(false); closeSheet(); });
+      g.appendChild(b);
+    });
+    body.appendChild(g);
+  }
+  function switchRow(id, title, desc, checked, onChange, iconPath){
+    var lab = el('label', 'srow'); lab.setAttribute('for', id);
+    lab.innerHTML = '<span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' + iconPath + '</svg></span>' +
+      '<span class="tx"><b></b><small></small></span><input class="vh" type="checkbox" role="switch"><span class="switch" aria-hidden="true"></span>';
+    lab.querySelector('b').textContent = title;
+    lab.querySelector('small').textContent = desc;
+    var input = lab.querySelector('input'); input.id = id; input.checked = checked;
+    input.addEventListener('change', function(){ onChange(input.checked); });
+    return lab;
+  }
+  function renderCues(body){
+    var g = el('div', 'menu gut');
+    g.appendChild(switchRow('cueSound', 'Ocean sound',
+      'Swell builds as you breathe in and washes back as you breathe out.' + (isIOS ? ' The silent switch mutes it.' : ''),
+      S.sound, function(v){
+        S.sound = v; save(); updatePicks();
+        if (v){ sound.init(); if (B.running && B.phase) sound.swell(B.phase, phaseLeft(performance.now())); } else sound.stop();
+      }, '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a8 8 0 0 1 0 11"/>'));
+    if (canFeel){
+      g.appendChild(switchRow('cueFeel', Haptics ? 'Haptics' : 'Vibration', 'A light tap each time you switch between in and out.',
+        S.haptics, function(v){ S.haptics = v; save(); if (v) feel('in'); },
+        '<rect x="8" y="3.5" width="8" height="17" rx="2"/><path d="M4.5 9v6M19.5 9v6"/>'));
+    }
+    body.appendChild(g);
+  }
+  function renderStatus(body){
+    var s = STATUS[statusKey()];
+    var wrap = el('div', 'prose gut'); var p = el('p'); p.textContent = s.text; wrap.appendChild(p); body.appendChild(wrap);
+    if (sensor === 'off' && !inFrame){
+      var b = el('button', 'btn'); b.type = 'button'; b.textContent = 'Turn on motion sensor'; b.setAttribute('data-autofocus', '');
+      b.addEventListener('click', function(){ startSensor(); closeSheet(); });
+      var w2 = el('div', 'gut'); w2.appendChild(b); body.appendChild(w2);
+    }
+  }
+  function renderWelcome(body){
+    var wrap = el('div', 'gut');
+    wrap.appendChild($('t-welcome').content.cloneNode(true));
+    body.appendChild(wrap);
+    wrap.querySelector('#welcomeOk').addEventListener('click', function(){
+      try { localStorage.setItem('sealegs.welcome.v1', '1'); } catch(e){}
+      sheetState.locked = false;
+      closeSheet();
+    });
+  }
+  var SHEETS = {
+    pace:      {title:'Choose a pace', render:renderPace},
+    len:       {title:'Session length', render:renderLen},
+    cues:      {title:'Cues', render:renderCues},
+    status:    {title:function(){ return STATUS[statusKey()].title; }, render:renderStatus},
+    how:       {title:'How it works', render:tpl('t-how')},
+    motionhow: {title:'Reading the motion', render:tpl('t-motionhow')},
+    safety:    {title:'Safety', render:tpl('t-safety')},
+    privacy:   {title:'Privacy policy', render:tpl('t-privacy')},
+    terms:     {title:'Terms of use', render:tpl('t-terms')},
+    licenses:  {title:'Licenses', render:tpl('t-licenses')},
+    welcome:   {title:'Welcome aboard', locked:true, render:renderWelcome}
+  };
+  function renderSheet(name){
+    var def = SHEETS[name];
+    sheetTitle.textContent = typeof def.title === 'function' ? def.title() : def.title;
+    sheetBody.textContent = '';
+    def.render(sheetBody);
+  }
+  function openSheet(name, opts){
+    var def = SHEETS[name]; if (!def) return;
+    opts = opts || {};
+    var wasOpen = sheet.open;
+    if (!wasOpen) sheetState.opener = document.activeElement;
+    sheetState.name = name; sheetState.locked = !!def.locked; sheetState.back = opts.back || null;
+    renderSheet(name);
+    sheetBack.hidden = !sheetState.back;
+    sheetClose.hidden = !!(sheetState.locked || sheetState.back);
+    sheetBody.scrollTop = 0;
+    if (!wasOpen){
+      try { sheet.showModal(); } catch(e){ sheet.setAttribute('open', ''); }
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ sheet.classList.add('in'); }); });
+    }
+    var f = sheet.querySelector('[data-autofocus]') || (!sheetClose.hidden ? sheetClose : !sheetBack.hidden ? sheetBack : null);
+    if (f){ try { f.focus({preventScroll:true}); } catch(e){} }
+  }
+  function closeSheet(){
+    if (!sheet.open) return;
+    sheet.classList.remove('in');
+    sheet.style.transition = ''; sheet.style.transform = '';
+    var done = false;
+    function fin(){
+      if (done) return; done = true;
+      sheet.removeEventListener('transitionend', onEnd);
+      try { sheet.close(); } catch(e){ sheet.removeAttribute('open'); }
+      var o = sheetState.opener; sheetState.name = null; sheetState.back = null;
+      if (o && o.focus && document.contains(o)){ try { o.focus({preventScroll:true}); } catch(e){} }
+    }
+    function onEnd(e){ if (e.target === sheet) fin(); }
+    sheet.addEventListener('transitionend', onEnd);
+    setTimeout(fin, 400);
+  }
+  sheet.addEventListener('cancel', function(e){
+    e.preventDefault();
+    if (sheetState.back) openSheet(sheetState.back);
+    else if (!sheetState.locked) closeSheet();
+  });
+  sheet.addEventListener('click', function(e){ if (e.target === sheet && !sheetState.locked && !sheetState.back) closeSheet(); });
+  sheetClose.addEventListener('click', closeSheet);
+  sheetBack.addEventListener('click', function(){ if (sheetState.back) openSheet(sheetState.back); });
+  // swipe down on the top of the sheet to close it
+  (function(){
+    var top = $('sheetTop'), drag = null;
+    top.addEventListener('pointerdown', function(e){
+      if (sheetState.locked || sheetState.back || (e.target.closest && e.target.closest('button'))) return;
+      drag = { y:e.clientY, dy:0 }; sheet.style.transition = 'none';
+      try { top.setPointerCapture(e.pointerId); } catch(err){}
+    });
+    top.addEventListener('pointermove', function(e){
+      if (!drag) return;
+      drag.dy = Math.max(0, e.clientY - drag.y);
+      sheet.style.transform = 'translateY(' + drag.dy + 'px)';
+    });
+    function end(){
+      if (!drag) return;
+      var dy = drag.dy; drag = null;
+      if (dy > 90) closeSheet();
+      else { sheet.style.transition = ''; sheet.style.transform = ''; }
+    }
+    top.addEventListener('pointerup', end);
+    top.addEventListener('pointercancel', end);
+  })();
+  document.addEventListener('click', function(e){
+    var t = e.target.closest ? e.target.closest('[data-sheet],[data-open]') : null;
+    if (!t) return;
+    if (t.hasAttribute('data-open')) openSheet(t.getAttribute('data-open'), {back:sheetState.name || null});
+    else openSheet(t.getAttribute('data-sheet'));
+  });
+  $('pickPace').addEventListener('click', function(){ openSheet('pace'); });
+  $('pickLen').addEventListener('click', function(){ openSheet('len'); });
+  $('pickCues').addEventListener('click', function(){ openSheet('cues'); });
+  pill.addEventListener('click', function(){ openSheet('status'); });
+  hint.addEventListener('click', function(){ openSheet('status'); });
+
+  // Android back button: close a sheet, then go back to Breathe, then leave the app
+  if (AppPlugin){
+    try {
+      quiet(AppPlugin.addListener('backButton', function(){
+        if (sheet.open){ if (sheetState.back) openSheet(sheetState.back); else if (!sheetState.locked) closeSheet(); }
+        else if (current !== 'breathe') showTab('breathe');
+        else if (AppPlugin.minimizeApp) quiet(AppPlugin.minimizeApp());
+      }));
+    } catch(e){}
+  }
+
+  /* ---------- drawing ---------- */
+  function circle(ctx, x, y, r){ ctx.beginPath(); ctx.arc(x, y, r, 0, 2*Math.PI); }
+  function drawScene(st){
+    var f = fit(scene), w = f.w, h = f.h, ctx = sctx;
+    if (!w || !h) return;
+    var tb = topbar.getBoundingClientRect(), pr = panel.getBoundingClientRect();
+    var top = tb.bottom - f.top + 10, bottom = pr.top - f.top - 10;
+    if (bottom - top < 80){ top = 0; bottom = h; }
+    ctx.setTransform(f.d, 0, 0, f.d, 0, 0);
+    ctx.globalAlpha = 1; ctx.setLineDash([]);
+    ctx.fillStyle = C.sky; ctx.fillRect(0, 0, w, h);
+    var cy = (top + bottom)/2;
+    var lim = Math.max(20, (bottom - top)/2 - 40), gain = h/40;  // about 8 px per degree of pitch on a phone
+    var off = clamp(-st.dpsi*gain, -lim, lim)*st.alpha;
+    var phi = st.phi, px = w/2 + off*Math.sin(phi), py = cy - off*Math.cos(phi);
+    var L = Math.sqrt(w*w + h*h) + 40;
+    ctx.save();
+    ctx.translate(px, py); ctx.rotate(phi);
+    ctx.globalAlpha = st.alpha;
+    ctx.fillStyle = C.sea; ctx.fillRect(-L, 0, 2*L, 2*L);
+    ctx.strokeStyle = C.swell; ctx.lineWidth = 1;
+    var ys = [7, 16, 28, 45, 68, 100, 142, 196];
+    for (var i = 0; i < ys.length; i++){ ctx.beginPath(); ctx.moveTo(-L, ys[i]); ctx.lineTo(L, ys[i]); ctx.stroke(); }
+    ctx.strokeStyle = C.horizon; ctx.lineWidth = 2.5;
+    if (!st.live) ctx.setLineDash([10, 8]);                    // dashed = not tracking the motion sensor
+    ctx.beginPath(); ctx.moveTo(-L, 0); ctx.lineTo(L, 0); ctx.stroke();
+    ctx.restore();
+
+    // the breathing light rides on the horizon
+    var br = st.br, base = clamp(Math.min(w, bottom - top)*0.085, 22, 38), r = base*(1 + (reduce ? 0.5 : 1.2)*br.k);
+    ctx.globalAlpha = 1; ctx.setLineDash([]);
+    if (br.phase){ ctx.fillStyle = C.orb; ctx.globalAlpha = 0.32*br.k; circle(ctx, px, py, r*1.5); ctx.fill(); ctx.globalAlpha = 1; }
+    ctx.shadowColor = C.shadow; ctx.shadowBlur = 22; ctx.shadowOffsetY = 6;
+    ctx.fillStyle = C.orb; circle(ctx, px, py, r); ctx.fill();
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    var ink = C['orb-ink'];
+    if (br.phase){
+      var rr = r + 10;
+      ctx.lineCap = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = C.horizon;
+      ctx.globalAlpha = 0.14; circle(ctx, px, py, rr); ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(px, py, rr, -Math.PI/2, -Math.PI/2 + Math.max(0.001, br.prog)*2*Math.PI); ctx.stroke();
+      ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = font(800, Math.round(base*0.95)); ctx.fillText(String(br.left), px, py + 1);
+    } else if (br.done){
+      ctx.strokeStyle = ink; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(px - base*0.34, py + base*0.02); ctx.lineTo(px - base*0.09, py + base*0.27); ctx.lineTo(px + base*0.36, py - base*0.24); ctx.stroke();
+    } else {
+      ctx.fillStyle = ink; circle(ctx, px, py, base*0.27); ctx.fill();
+    }
+  }
+
+  function drawClino(){
+    var f = fit(clino), w = f.w, h = f.h, ctx = cctx;
+    if (!w || !h) return;
+    ctx.setTransform(f.d, 0, 0, f.d, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    var cx = w/2, top = 12, R = Math.min(h - top - 34, w*0.62);
+    function pt(a, rad){ return [cx + rad*Math.sin(a*D2R), top + rad*Math.cos(a*D2R)]; }
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = C.fill2; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(cx, top, R, 45*D2R, 135*D2R); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = font(600, 12);
+    for (var a = -45; a <= 45; a += 5){
+      var major = a % 10 === 0, p1 = pt(a, R - 3), p2 = pt(a, R - (major ? 13 : 8));
+      ctx.strokeStyle = C.faint; ctx.globalAlpha = major ? 1 : 0.6; ctx.lineWidth = major ? 1.5 : 1;
+      ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.stroke();
+      ctx.globalAlpha = 1;
+      if (major){ var q = pt(a, R + 15); ctx.fillStyle = C.muted; ctx.fillText(String(Math.abs(a)), q[0], q[1]); }
+    }
+    ctx.font = font(700, 11); ctx.fillStyle = C.muted;
+    var ls = 'letterSpacing' in ctx;
+    if (ls) ctx.letterSpacing = '1px';
+    ctx.fillText('PORT', cx - R*0.62, top + 10);
+    ctx.fillText('STBD', cx + R*0.62, top + 10);
+    if (ls) ctx.letterSpacing = '0px';
+    var live = sensor === 'live' && cur;
+    // max-heel telltales, like the drag pointers on a bridge clinometer
+    function telltale(deg){
+      var aa = clamp(deg, -47, 47), tip = pt(aa, R + 1), b1 = pt(aa - 2.2, R + 8), b2 = pt(aa + 2.2, R + 8);
+      ctx.fillStyle = C.muted;
+      ctx.beginPath(); ctx.moveTo(tip[0], tip[1]); ctx.lineTo(b1[0], b1[1]); ctx.lineTo(b2[0], b2[1]); ctx.closePath(); ctx.fill();
+    }
+    if (live){ if (tell.p > 0.3) telltale(-tell.p); if (tell.s > 0.3) telltale(tell.s); }
+    var ang = live ? clamp(cur.roll, -47, 47) : 0, end = pt(ang, R - 18);
+    ctx.strokeStyle = live ? C.fg : C.faint; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(end[0], end[1]); ctx.stroke();
+    ctx.fillStyle = live ? C.fg : C.faint; circle(ctx, end[0], end[1], 5); ctx.fill();
+    ctx.fillStyle = C.fg; circle(ctx, cx, top, 4); ctx.fill();
+  }
+
+  /* ---------- readouts ---------- */
+  var CHIP = {none:'No reading', wait:'Reading…', calm:'Light motion', moderate:'Moderate', heavy:'Strong motion'};
+  function setChip(level){
+    if (out.chip.getAttribute('data-level') !== level){ out.chip.setAttribute('data-level', level); out.chip.textContent = CHIP[level]; }
+  }
+  function updateUI(){
+    if (!(sensor === 'live' && cur)) return;
+    var r = cur.roll, p = cur.dpsi;
+    out.roll.textContent = Math.abs(r).toFixed(1) + '°';
+    out.rollSub.textContent = Math.abs(r) < 0.3 ? 'level' : (r > 0 ? 'starboard' : 'port');
+    out.pitch.textContent = (p < 0 ? '−' : '+') + Math.abs(p).toFixed(1) + '°';
+    out.pitchSub.textContent = Math.abs(p) < 0.3 ? 'steady' : (p > 0 ? 'bow up' : 'bow down');
+    var maxP = 0, maxS = 0, ss = 0, swing = 0, n = samples.length, i, a, d;
+    for (i = 0; i < n; i++){
+      a = samples[i].a; d = samples[i].d;
+      if (-a > maxP) maxP = -a;
+      if (a > maxS) maxS = a;
+      if (Math.abs(d) > swing) swing = Math.abs(d);
+      ss += d*d;
+    }
+    tell.p = maxP; tell.s = maxS;
+    var enough = n >= 50, rms = n ? Math.sqrt(ss/n) : 0;
+    if (enough){
+      out.peak.textContent = Math.max(maxP, maxS).toFixed(1) + '°';
+      out.peakSub.textContent = 'P ' + maxP.toFixed(1) + '° · S ' + maxS.toFixed(1) + '°';
+    } else { out.peak.textContent = '—'; out.peakSub.textContent = 'collecting…'; }
+    if (periods.length >= 2){
+      var srt = periods.slice().sort(function(x, y){ return x - y; });
+      out.period.textContent = srt[Math.floor(srt.length/2)].toFixed(1) + ' s';
+      out.periodSub.textContent = 'median of last ' + periods.length + ' rolls';
+    } else {
+      out.period.textContent = '—';
+      out.periodSub.textContent = enough && swing < 0.6 ? 'too calm to read' : 'measuring…';
+    }
+    setChip(!enough ? 'wait' : rms < 2 ? 'calm' : rms < 4 ? 'moderate' : 'heavy');
+  }
+
+  /* ---------- loop ---------- */
+  var lastFrame = 0, lastUI = 0;
+  function frame(now){
+    var dt = lastFrame ? Math.min(0.1, (now - lastFrame)/1000) : 1/60; lastFrame = now;
+    var st = process(now, dt) || { phi: phiShown, dpsi: 0, alpha: 1 };
+    st.br = breathFrame(now);
+    st.live = sensor === 'live';
+    if (current === 'breathe') drawScene(st);
+    else if (current === 'motion') drawClino();
+    if (now - lastUI > 250){ lastUI = now; updateUI(); }
+    requestAnimationFrame(frame);
+  }
+  load();
+  updatePicks();
+  showIdle();
+  setStatus();
+  requestAnimationFrame(frame);
+  var welcomed = false;
+  try { welcomed = localStorage.getItem('sealegs.welcome.v1') === '1'; } catch(e){}
+  if (!welcomed) setTimeout(function(){ openSheet('welcome'); }, 250);
+})();
+</script>

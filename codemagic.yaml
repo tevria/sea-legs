@@ -1,0 +1,35 @@
+# Codemagic builds the signed iPhone app on its Macs and sends it to TestFlight, so you don't need a Mac.
+# Setup steps are in docs/LAUNCH.md. Before the first run, add your App Store Connect API key in Codemagic
+# (Team settings > Integrations > Developer Portal) and name it exactly: Sea Legs ASC key
+workflows:
+  ios-testflight:
+    name: iOS to TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Sea Legs ASC key
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.tevria.sealegs
+      node: 22
+      xcode: latest
+    scripts:
+      - name: Build the web app and sync it into the iOS project
+        script: |
+          npm ci
+          npm run build
+          npx cap sync ios
+      - name: Use the signing profiles Codemagic fetched
+        script: xcode-project use-profiles
+      - name: Give this build a new build number
+        script: |
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = $BUILD_NUMBER;/g" ios/App/App.xcodeproj/project.pbxproj
+      - name: Build the signed app
+        script: xcode-project build-ipa --project "ios/App/App.xcodeproj" --scheme "App"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sea Legs</string>
+    <string name="title_activity_main">Sea Legs</string>
+    <string name="package_name">com.tevria.sealegs</string>
+    <string name="custom_url_scheme">com.tevria.sealegs</string>
+</resources>

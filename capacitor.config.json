@@ -1,0 +1,17 @@
+{
+  "appId": "com.tevria.sealegs",
+  "appName": "Sea Legs",
+  "webDir": "www",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 500,
+      "launchAutoHide": true,
+      "showSpinner": false
+    },
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "DEFAULT",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

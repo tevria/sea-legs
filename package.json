@@ -1,0 +1,30 @@
+{
+  "name": "sea-legs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Breathe with a steady horizon at sea. One web app, packaged for iPhone and Android with Capacitor.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "sync": "npm run build && npx cap sync",
+    "assets": "capacitor-assets generate --ios --android --iconBackgroundColor \"#000000\" --iconBackgroundColorDark \"#000000\" --splashBackgroundColor \"#ffffff\" --splashBackgroundColorDark \"#0a0a0b\"",
+    "android": "npm run sync && npx cap open android",
+    "ios": "npm run sync && npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor-community/keep-awake": "^8.0.1",
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.6.0",
+    "@capacitor/splash-screen": "^8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.0",
+    "@fontsource-variable/manrope": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
